@@ -255,7 +255,7 @@ export default function RSVPSection() {
   const isLastEvent = currentEventIndex === partyEvents.length - 1;
 
   return (
-    <section className="py-24 md:py-32 px-6">
+    <section id="rsvp" className="py-24 md:py-32 px-6">
       <div className="mx-auto max-w-2xl">
         {/* Section Heading */}
         <div className="text-center mb-12 md:mb-16">

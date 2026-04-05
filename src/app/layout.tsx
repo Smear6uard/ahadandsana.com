@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Outfit, Playfair_Display } from "next/font/google";
+import { Alex_Brush, Amiri, Cormorant_Garamond, Outfit } from "next/font/google";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -11,11 +11,18 @@ const cormorant = Cormorant_Garamond({
   preload: true,
 });
 
-const playfair = Playfair_Display({
+const alexBrush = Alex_Brush({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  weight: "400",
   variable: "--font-script",
+  display: "swap",
+  preload: true,
+});
+
+const amiri = Amiri({
+  subsets: ["latin", "arabic"],
+  weight: "400",
+  variable: "--font-arabic",
   display: "swap",
   preload: true,
 });
@@ -46,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${playfair.variable} ${outfit.variable}`}>
+    <html lang="en" className={`${cormorant.variable} ${alexBrush.variable} ${amiri.variable} ${outfit.variable}`}>
       <body className="antialiased">{children}</body>
     </html>
   );

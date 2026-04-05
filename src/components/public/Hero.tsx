@@ -96,24 +96,37 @@ export default function Hero() {
           </motion.div>
 
           {/* Text Content */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+          <div className="flex flex-col items-center text-center flex-1">
             {/* Top flourish */}
             <GoldFlourish delay={0.6} />
 
+            {/* Bismillah */}
+            <motion.p
+              dir="rtl"
+              lang="ar"
+              className="mt-6 text-gold text-lg md:text-xl"
+              style={{ fontFamily: "var(--font-arabic)" }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.8, ease: smooth }}
+            >
+              بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
+            </motion.p>
+
             {/* Preamble */}
             <motion.p
-              className="label-caps mt-6 text-gold"
+              className="label-caps mt-4 text-gold"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8, duration: 0.6, ease: smooth }}
+              transition={{ delay: 0.9, duration: 0.6, ease: smooth }}
             >
-              With joy we invite you to celebrate
+              We kindly invite you to celebrate
             </motion.p>
 
             {/* Couple's Names */}
             <div className="mt-6 md:mt-8">
               <motion.h1
-                className="font-script italic text-6xl sm:text-7xl md:text-8xl lg:text-[100px] leading-[0.95] tracking-[0.02em] text-charcoal font-normal"
+                className="font-script text-6xl sm:text-7xl md:text-8xl lg:text-[100px] leading-[0.95] text-charcoal font-normal"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1.1, duration: 0.8, ease: smooth }}
@@ -122,7 +135,7 @@ export default function Hero() {
               </motion.h1>
 
               <motion.span
-                className="block font-script italic text-4xl sm:text-[2.7rem] md:text-5xl lg:text-[60px] text-gold my-1 md:my-2"
+                className="block font-script text-4xl sm:text-[2.7rem] md:text-5xl lg:text-[60px] text-gold my-1 md:my-2"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1.4, duration: 0.5, ease: elegant }}
@@ -131,7 +144,7 @@ export default function Hero() {
               </motion.span>
 
               <motion.h1
-                className="font-script italic text-6xl sm:text-7xl md:text-8xl lg:text-[100px] leading-[0.95] tracking-[0.02em] text-charcoal font-normal"
+                className="font-script text-6xl sm:text-7xl md:text-8xl lg:text-[100px] leading-[0.95] text-charcoal font-normal"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1.6, duration: 0.8, ease: smooth }}
@@ -144,6 +157,17 @@ export default function Hero() {
             <motion.div className="mt-6 md:mt-8">
               <GoldFlourish delay={2.2} />
             </motion.div>
+
+            {/* RSVP Button */}
+            <motion.a
+              href="#rsvp"
+              className="mt-8 md:mt-10 inline-block bg-charcoal text-ivory px-8 py-3 text-[11px] font-medium tracking-[0.25em] uppercase transition-all duration-300 hover:bg-charcoal-light hover:shadow-lg hover:shadow-charcoal/10 hover:-translate-y-0.5 active:translate-y-0"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 2.6, duration: 0.7, ease: smooth }}
+            >
+              RSVP
+            </motion.a>
 
           </div>
         </div>
