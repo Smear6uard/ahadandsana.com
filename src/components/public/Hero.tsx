@@ -113,7 +113,7 @@ export default function Hero() {
             {/* Couple's Names */}
             <div className="mt-6 md:mt-8">
               <motion.h1
-                className="font-script text-6xl sm:text-7xl md:text-8xl lg:text-[110px] leading-[0.95] text-charcoal font-normal"
+                className="font-script italic text-6xl sm:text-7xl md:text-8xl lg:text-[100px] leading-[0.95] tracking-[0.02em] text-charcoal font-normal"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1.1, duration: 0.8, ease: smooth }}
@@ -122,7 +122,7 @@ export default function Hero() {
               </motion.h1>
 
               <motion.span
-                className="block font-script text-4xl sm:text-[2.7rem] md:text-5xl lg:text-[66px] text-gold my-1 md:my-2"
+                className="block font-script italic text-4xl sm:text-[2.7rem] md:text-5xl lg:text-[60px] text-gold my-1 md:my-2"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1.4, duration: 0.5, ease: elegant }}
@@ -131,7 +131,7 @@ export default function Hero() {
               </motion.span>
 
               <motion.h1
-                className="font-script text-6xl sm:text-7xl md:text-8xl lg:text-[110px] leading-[0.95] text-charcoal font-normal"
+                className="font-script italic text-6xl sm:text-7xl md:text-8xl lg:text-[100px] leading-[0.95] tracking-[0.02em] text-charcoal font-normal"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1.6, duration: 0.8, ease: smooth }}
