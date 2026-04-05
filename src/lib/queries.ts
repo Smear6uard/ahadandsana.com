@@ -127,8 +127,10 @@ export type PublicEventResponse = {
   id: number;
   name: string;
   date: string;
+  time: string;
   venue_name: string;
   venue_address: string;
+  google_maps_url: string;
 };
 
 function serializeAdminParty(party: AdminPartyRecord): AdminPartyResponse {
@@ -250,8 +252,10 @@ export async function getPublicEvents(): Promise<PublicEventResponse[]> {
       id: events.id,
       name: events.name,
       date: events.date,
+      time: events.time,
       venue_name: events.venueName,
       venue_address: events.venueAddress,
+      google_maps_url: events.googleMapsUrl,
     })
     .from(events)
     .orderBy(asc(events.date), asc(events.id));

@@ -6,20 +6,26 @@ import { events } from "@/db/schema";
 const seedEvents: Array<{
   name: string;
   date: string;
+  time: string;
   venueName: string;
   venueAddress: string;
+  googleMapsUrl: string;
 }> = [
   {
     name: "Mehndi",
     date: "2026-07-16",
-    venueName: "Canvas Venue",
-    venueAddress: "255 W Dundee Rd, Wheeling, IL 60090",
+    time: "6:00 PM",
+    venueName: "The Canvas Venue",
+    venueAddress: "97 East Marquardt Drive, Wheeling, IL 60090",
+    googleMapsUrl: "https://maps.google.com/?q=97+East+Marquardt+Drive+Wheeling+IL+60090",
   },
   {
     name: "Shadi",
     date: "2026-07-17",
+    time: "5:30 PM",
     venueName: "Chicago Cultural Center",
-    venueAddress: "78 E Washington St, Chicago, IL 60602",
+    venueAddress: "78 East Washington Street, Chicago, IL 60602",
+    googleMapsUrl: "https://maps.google.com/?q=78+East+Washington+Street+Chicago+IL+60602",
   },
 ];
 

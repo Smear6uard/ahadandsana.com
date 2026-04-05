@@ -1,20 +1,42 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, Outfit, Pinyon_Script } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-display",
+  display: "swap",
+  preload: true,
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const pinyonScript = Pinyon_Script({
   subsets: ["latin"],
+  weight: "400",
+  variable: "--font-script",
+  display: "swap",
+  preload: true,
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-body",
+  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {
-  title: "ahadandsana.com",
-  description: "Wedding RSVP backend",
+  title: "Ahad & Sana — July 2026",
+  description:
+    "Join us in celebrating the wedding of Ahad and Sana. July 16 & 17, 2026 in Chicago.",
+  openGraph: {
+    title: "Ahad & Sana — Wedding Celebration",
+    description:
+      "Join us in celebrating the wedding of Ahad and Sana. July 16 & 17, 2026 in Chicago.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -23,12 +45,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
+    <html lang="en" className={`${cormorant.variable} ${pinyonScript.variable} ${outfit.variable}`}>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

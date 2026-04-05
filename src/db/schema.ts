@@ -16,8 +16,10 @@ export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   date: date("date", { mode: "string" }).notNull(),
+  time: varchar("time", { length: 20 }).notNull().default(""),
   venueName: varchar("venue_name", { length: 255 }).notNull(),
   venueAddress: text("venue_address").notNull(),
+  googleMapsUrl: text("google_maps_url").notNull().default(""),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 
