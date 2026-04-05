@@ -33,6 +33,7 @@ export default function AddGuestModal({
   onSaved: () => void;
 }) {
   const [partyName, setPartyName] = useState("");
+  const [side, setSide] = useState<"ahad" | "sana" | "">("");
   const [guests, setGuests] = useState<GuestRow[]>([emptyGuest()]);
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -91,6 +92,7 @@ export default function AddGuestModal({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             party_name: partyName.trim() || undefined,
+            side: side || undefined,
             guests: guests.map((g) => ({
               first_name: g.first_name.trim(),
               last_name: g.last_name.trim(),
@@ -113,6 +115,7 @@ export default function AddGuestModal({
         onSaved();
         if (addAnother) {
           setPartyName("");
+          setSide("");
           setGuests([emptyGuest()]);
           setAddress("");
           setCity("");
@@ -127,7 +130,7 @@ export default function AddGuestModal({
         setSaving(false);
       }
     },
-    [partyName, guests, address, city, state, zip, onSaved, onClose]
+    [partyName, side, guests, address, city, state, zip, onSaved, onClose]
   );
 
   return (
@@ -160,9 +163,30 @@ export default function AddGuestModal({
               type="text"
               value={partyName}
               onChange={(e) => setPartyName(e.target.value)}
-              placeholder="e.g. The Khan Family — auto-generated if blank"
+              placeholder="e.g. The Khan Family"
               className="admin-input"
             />
+          </div>
+
+          {/* Guest List Side */}
+          <div>
+            <label className="label-caps block mb-2">Guest List</label>
+            <div className="side-picker-track">
+              <button
+                type="button"
+                className={`side-picker-option ${side === "ahad" ? "side-picker-active" : ""}`}
+                onClick={() => setSide(side === "ahad" ? "" : "ahad")}
+              >
+                {"Ahad's Side"}
+              </button>
+              <button
+                type="button"
+                className={`side-picker-option ${side === "sana" ? "side-picker-active" : ""}`}
+                onClick={() => setSide(side === "sana" ? "" : "sana")}
+              >
+                {"Sana's Side"}
+              </button>
+            </div>
           </div>
 
           {/* Guest Rows */}

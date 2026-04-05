@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq, notInArray } from "drizzle-orm";
 
 import { db } from "@/db";
-import { guests, invitations } from "@/db/schema";
+import { guests, invitations, parties } from "@/db/schema";
 import { ApiError, handleRouteError, parseJsonBody, parseRouteId } from "@/lib/api";
 import { assertEventIdsExist, getAdminGuestById } from "@/lib/queries";
 import { updateGuestSchema } from "@/lib/validations";
@@ -20,6 +20,7 @@ export async function PUT(
       where: eq(guests.id, guestId),
       columns: {
         id: true,
+        partyId: true,
       },
     });
 
@@ -61,6 +62,13 @@ export async function PUT(
             zip: body.zip ?? null,
           })
           .where(eq(guests.id, guestId));
+      }
+
+      if (body.side !== undefined) {
+        await tx
+          .update(parties)
+          .set({ side: body.side })
+          .where(eq(parties.id, existingGuest.partyId));
       }
 
       if (body.event_ids) {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { invitationStatuses } from "@/db/schema";
+import { invitationStatuses, partySides } from "@/db/schema";
 
 const positiveInt = z
   .number()
@@ -55,6 +55,7 @@ export const loginSchema = z.object({
 
 export const createPartySchema = z.object({
   party_name: optionalTrimmedString(255),
+  side: z.enum(partySides).optional(),
   guests: z
     .array(
       guestBaseSchema.extend({
@@ -68,6 +69,7 @@ export const updateGuestSchema = guestBaseSchema
   .partial()
   .extend({
     event_ids: eventIdsSchema.optional(),
+    side: z.enum(partySides).nullable().optional(),
   });
 
 export const updateInvitationSchema = z.object({

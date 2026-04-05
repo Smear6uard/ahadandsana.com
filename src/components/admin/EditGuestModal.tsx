@@ -14,6 +14,8 @@ interface GuestInvitation {
   status: string;
 }
 
+type PartySide = "ahad" | "sana" | null;
+
 interface GuestData {
   id: number;
   first_name: string;
@@ -29,15 +31,18 @@ interface GuestData {
 
 export default function EditGuestModal({
   guest,
+  partySide: initialPartySide,
   events,
   onClose,
   onSaved,
 }: {
   guest: GuestData;
+  partySide: PartySide;
   events: EventOption[];
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const [side, setSide] = useState<"ahad" | "sana" | "">(initialPartySide || "");
   const [firstName, setFirstName] = useState(guest.first_name);
   const [lastName, setLastName] = useState(guest.last_name);
   const [email, setEmail] = useState(guest.email || "");
@@ -81,13 +86,14 @@ export default function EditGuestModal({
         body: JSON.stringify({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
-          email: email.trim() || null,
-          phone: phone.trim() || null,
-          address: address.trim() || null,
-          city: city.trim() || null,
-          state: state.trim() || null,
-          zip: zip.trim() || null,
+          email: email.trim() || undefined,
+          phone: phone.trim() || undefined,
+          address: address.trim() || undefined,
+          city: city.trim() || undefined,
+          state: state.trim() || undefined,
+          zip: zip.trim() || undefined,
           event_ids: eventIds,
+          side: side || null,
         }),
       });
       if (!res.ok) {
@@ -101,7 +107,7 @@ export default function EditGuestModal({
     } finally {
       setSaving(false);
     }
-  }, [firstName, lastName, email, phone, address, city, state, zip, eventIds, guest.id, onSaved, onClose]);
+  }, [side, firstName, lastName, email, phone, address, city, state, zip, eventIds, guest.id, onSaved, onClose]);
 
   const handleDelete = useCallback(async () => {
     setDeleting(true);
@@ -181,6 +187,27 @@ export default function EditGuestModal({
                 placeholder="Optional"
                 className="admin-input"
               />
+            </div>
+          </div>
+
+          {/* Guest List Side */}
+          <div>
+            <label className="label-caps block mb-2">Guest List</label>
+            <div className="side-picker-track">
+              <button
+                type="button"
+                className={`side-picker-option ${side === "ahad" ? "side-picker-active" : ""}`}
+                onClick={() => setSide(side === "ahad" ? "" : "ahad")}
+              >
+                {"Ahad's Side"}
+              </button>
+              <button
+                type="button"
+                className={`side-picker-option ${side === "sana" ? "side-picker-active" : ""}`}
+                onClick={() => setSide(side === "sana" ? "" : "sana")}
+              >
+                {"Sana's Side"}
+              </button>
             </div>
           </div>
 

@@ -87,6 +87,7 @@ type PublicPartyRecord = Awaited<ReturnType<typeof fetchPublicPartiesRaw>>[numbe
 export type AdminPartyResponse = {
   id: number;
   name: string;
+  side: "ahad" | "sana" | null;
   guests: Array<{
     id: number;
     first_name: string;
@@ -142,6 +143,7 @@ function serializeAdminParty(party: AdminPartyRecord): AdminPartyResponse {
   return {
     id: party.id,
     name: party.name,
+    side: party.side ?? null,
     guests: party.guests.map((guest) => ({
       id: guest.id,
       first_name: guest.firstName,

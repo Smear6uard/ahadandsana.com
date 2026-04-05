@@ -44,6 +44,7 @@ interface GuestData {
 interface Party {
   id: number;
   name: string;
+  side: "ahad" | "sana" | null;
   guests: GuestData[];
 }
 

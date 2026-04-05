@@ -24,9 +24,12 @@ interface GuestData {
   invitations: GuestInvitation[];
 }
 
+type PartySide = "ahad" | "sana" | null;
+
 interface Party {
   id: number;
   name: string;
+  side: PartySide;
   guests: GuestData[];
 }
 
@@ -35,9 +38,12 @@ interface EventOption {
   name: string;
 }
 
+type SideFilter = "all" | "ahad" | "sana";
+
 interface GroupedParty {
   partyId: number;
   partyName: string;
+  partySide: PartySide;
   guests: GuestData[];
 }
 
@@ -51,19 +57,28 @@ export default function GuestTable({
   onRefresh: () => void;
 }) {
   const [search, setSearch] = useState("");
+  const [sideFilter, setSideFilter] = useState<SideFilter>("all");
   const [editingGuest, setEditingGuest] = useState<GuestData | null>(null);
+  const [editingPartySide, setEditingPartySide] = useState<PartySide>(null);
 
   const groupedParties = useMemo<GroupedParty[]>(() => {
+    let filtered = parties;
+
+    if (sideFilter !== "all") {
+      filtered = filtered.filter((p) => p.side === sideFilter);
+    }
+
     if (!search.trim()) {
-      return parties.map((p) => ({
+      return filtered.map((p) => ({
         partyId: p.id,
         partyName: p.name,
+        partySide: p.side,
         guests: p.guests,
       }));
     }
     const q = search.toLowerCase();
     const result: GroupedParty[] = [];
-    for (const party of parties) {
+    for (const party of filtered) {
       const matchingGuests = party.guests.filter(
         (g) =>
           g.first_name.toLowerCase().includes(q) ||
@@ -74,12 +89,13 @@ export default function GuestTable({
         result.push({
           partyId: party.id,
           partyName: party.name,
+          partySide: party.side,
           guests: matchingGuests,
         });
       }
     }
     return result;
-  }, [parties, search]);
+  }, [parties, search, sideFilter]);
 
   const totalGuests = groupedParties.reduce(
     (sum, p) => sum + p.guests.length,
@@ -121,10 +137,43 @@ export default function GuestTable({
     [onRefresh]
   );
 
+  const sideCounts = useMemo(() => {
+    const all = parties.reduce((s, p) => s + p.guests.length, 0);
+    const ahad = parties.filter((p) => p.side === "ahad").reduce((s, p) => s + p.guests.length, 0);
+    const sana = parties.filter((p) => p.side === "sana").reduce((s, p) => s + p.guests.length, 0);
+    return { all, ahad, sana };
+  }, [parties]);
+
   return (
     <div className="admin-card overflow-hidden">
-      {/* Search Bar */}
-      <div className="px-5 py-4 border-b border-gold/8">
+      {/* Side Filter + Search */}
+      <div className="px-5 pt-4 pb-3 border-b border-gold/8 space-y-3">
+        {/* Side filter tabs */}
+        <div className="side-filter-track">
+          <button
+            className={`side-filter-tab ${sideFilter === "all" ? "side-filter-active" : ""}`}
+            onClick={() => setSideFilter("all")}
+          >
+            All Guests
+            <span className="side-filter-count">{sideCounts.all}</span>
+          </button>
+          <button
+            className={`side-filter-tab ${sideFilter === "ahad" ? "side-filter-active" : ""}`}
+            onClick={() => setSideFilter("ahad")}
+          >
+            {"Ahad's List"}
+            <span className="side-filter-count">{sideCounts.ahad}</span>
+          </button>
+          <button
+            className={`side-filter-tab ${sideFilter === "sana" ? "side-filter-active" : ""}`}
+            onClick={() => setSideFilter("sana")}
+          >
+            {"Sana's List"}
+            <span className="side-filter-count">{sideCounts.sana}</span>
+          </button>
+        </div>
+
+        {/* Search */}
         <div className="relative">
           <svg
             className="absolute left-4 top-1/2 -translate-y-1/2 text-gold/40"
@@ -182,17 +231,17 @@ export default function GuestTable({
                   <tr
                     key={guest.id}
                     className={rowClass}
-                    onClick={() => setEditingGuest(guest)}
+                    onClick={() => { setEditingGuest(guest); setEditingPartySide(party.partySide); }}
                   >
                     <td className="text-stone-warm">
                       {isMulti && <div className="party-group-bar" />}
                       {isFirst ? (
-                        <span className="font-medium text-charcoal-light text-[13px]">
-                          {party.partyName}
+                        <span className={`text-[13px] ${party.partyName ? "font-medium text-charcoal-light" : "text-stone-warm/40 italic"}`}>
+                          {party.partyName || "—"}
                         </span>
                       ) : (
                         <span className="text-transparent select-none text-[13px]">
-                          {party.partyName}
+                          {party.partyName || "—"}
                         </span>
                       )}
                     </td>
@@ -252,7 +301,9 @@ export default function GuestTable({
           <div key={party.partyId} className="border-b border-gold/8 last:border-b-0">
             {/* Party header */}
             <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-              <p className="label-caps text-[10px]">{party.partyName}</p>
+              <p className={`label-caps text-[10px] ${!party.partyName ? "text-stone-warm/40 italic normal-case tracking-normal" : ""}`}>
+                {party.partyName || "No party name"}
+              </p>
               <button
                 onClick={() => handleDeleteParty(party.partyId)}
                 className="text-stone-warm/30 hover:text-red-400 text-[10px] transition-colors"
@@ -265,7 +316,7 @@ export default function GuestTable({
               <div
                 key={guest.id}
                 className="px-4 py-3 ml-3 border-l-2 border-gold/15 active:bg-gold/5 transition-colors"
-                onClick={() => setEditingGuest(guest)}
+                onClick={() => { setEditingGuest(guest); setEditingPartySide(party.partySide); }}
               >
                 <div className="flex items-start justify-between">
                   <p className="font-medium text-charcoal text-sm">
@@ -300,6 +351,7 @@ export default function GuestTable({
       {editingGuest && (
         <EditGuestModal
           guest={editingGuest}
+          partySide={editingPartySide}
           events={events}
           onClose={() => setEditingGuest(null)}
           onSaved={onRefresh}

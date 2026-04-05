@@ -23,11 +23,16 @@ export const events = pgTable("events", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 
+export const partySides = ["ahad", "sana"] as const;
+
 export const parties = pgTable("parties", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull().default(""),
+  side: varchar("side", { length: 10, enum: partySides }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
+
+export type PartySide = (typeof partySides)[number];
 
 export const guests = pgTable("guests", {
   id: serial("id").primaryKey(),
