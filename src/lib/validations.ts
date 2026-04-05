@@ -54,7 +54,7 @@ export const loginSchema = z.object({
 });
 
 export const createPartySchema = z.object({
-  party_name: z.string().trim().min(1).max(255),
+  party_name: optionalTrimmedString(255),
   guests: z
     .array(
       guestBaseSchema.extend({

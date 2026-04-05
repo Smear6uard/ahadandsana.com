@@ -26,11 +26,14 @@ export async function POST(request: Request) {
 
     await assertEventIdsExist(allEventIds);
 
+    const partyName =
+      body.party_name || `The ${body.guests[0].last_name} Family`;
+
     const createdPartyId = await db.transaction(async (tx) => {
       const [createdParty] = await tx
         .insert(parties)
         .values({
-          name: body.party_name,
+          name: partyName,
         })
         .returning({ id: parties.id });
 

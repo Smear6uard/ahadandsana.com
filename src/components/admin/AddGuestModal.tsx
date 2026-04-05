@@ -72,11 +72,6 @@ export default function AddGuestModal({
     async (addAnother: boolean) => {
       setError("");
 
-      if (!partyName.trim()) {
-        setError("Party name is required.");
-        return;
-      }
-
       for (const g of guests) {
         if (!g.first_name.trim() || !g.last_name.trim()) {
           setError("All guests must have a first and last name.");
@@ -95,7 +90,7 @@ export default function AddGuestModal({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            party_name: partyName.trim(),
+            party_name: partyName.trim() || undefined,
             guests: guests.map((g) => ({
               first_name: g.first_name.trim(),
               last_name: g.last_name.trim(),
@@ -160,12 +155,12 @@ export default function AddGuestModal({
 
           {/* Party Name */}
           <div>
-            <label className="label-caps block mb-2">Party Name</label>
+            <label className="label-caps block mb-2">Party Name <span className="font-normal text-stone-warm/50">(optional)</span></label>
             <input
               type="text"
               value={partyName}
               onChange={(e) => setPartyName(e.target.value)}
-              placeholder="e.g. The Khan Family"
+              placeholder="e.g. The Khan Family — auto-generated if blank"
               className="admin-input"
             />
           </div>
