@@ -1,4 +1,5 @@
-import "dotenv/config";
+import { config } from "dotenv";
+config({ path: ".env.local" });
 
 import { db } from "@/db";
 import { events } from "@/db/schema";

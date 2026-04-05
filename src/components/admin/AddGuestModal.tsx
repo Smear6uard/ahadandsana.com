@@ -136,16 +136,16 @@ export default function AddGuestModal({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl my-8">
+    <div className="admin-modal-overlay">
+      <div className="admin-modal max-w-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gold/10">
+          <h2 className="font-display text-xl text-charcoal">
             Add Guest Party
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+            className="text-stone-warm/40 hover:text-stone-warm transition-colors text-xl leading-none"
           >
             ×
           </button>
@@ -153,22 +153,20 @@ export default function AddGuestModal({
 
         <div className="p-6 space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+            <div className="bg-blush/40 border border-blush-deep/30 text-charcoal-light text-sm rounded-xl px-4 py-3">
               {error}
             </div>
           )}
 
           {/* Party Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Party Name
-            </label>
+            <label className="label-caps block mb-2">Party Name</label>
             <input
               type="text"
               value={partyName}
               onChange={(e) => setPartyName(e.target.value)}
               placeholder="e.g. The Khan Family"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="admin-input"
             />
           </div>
 
@@ -176,20 +174,18 @@ export default function AddGuestModal({
           {guests.map((guest, gi) => (
             <div
               key={gi}
-              className="bg-gray-50 rounded-xl p-4 space-y-3 relative"
+              className="bg-ivory-warm/60 rounded-2xl p-5 space-y-3 relative border border-gold/8"
             >
               {guests.length > 1 && (
                 <button
                   onClick={() => removeGuestRow(gi)}
-                  className="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-sm"
+                  className="absolute top-3 right-4 text-stone-warm/40 hover:text-red-400 text-sm transition-colors"
                   title="Remove guest"
                 >
                   ×
                 </button>
               )}
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Guest {gi + 1}
-              </p>
+              <p className="label-caps">Guest {gi + 1}</p>
               <div className="grid grid-cols-2 gap-3">
                 <input
                   type="text"
@@ -198,7 +194,7 @@ export default function AddGuestModal({
                     updateGuest(gi, { first_name: e.target.value })
                   }
                   placeholder="First Name"
-                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="admin-input"
                 />
                 <input
                   type="text"
@@ -207,7 +203,7 @@ export default function AddGuestModal({
                     updateGuest(gi, { last_name: e.target.value })
                   }
                   placeholder="Last Name"
-                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="admin-input"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -216,30 +212,32 @@ export default function AddGuestModal({
                   value={guest.email}
                   onChange={(e) => updateGuest(gi, { email: e.target.value })}
                   placeholder="Email (optional)"
-                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="admin-input"
                 />
                 <input
                   type="tel"
                   value={guest.phone}
                   onChange={(e) => updateGuest(gi, { phone: e.target.value })}
                   placeholder="Phone (optional)"
-                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="admin-input"
                 />
               </div>
               {/* Event checkboxes */}
-              <div className="flex gap-4 mt-2">
+              <div className="flex gap-5 mt-1">
                 {events.map((event) => (
                   <label
                     key={event.id}
-                    className="flex items-center gap-2 cursor-pointer"
+                    className="flex items-center gap-2 cursor-pointer group"
                   >
                     <input
                       type="checkbox"
                       checked={guest.event_ids.includes(event.id)}
                       onChange={() => toggleEvent(gi, event.id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="admin-checkbox"
                     />
-                    <span className="text-sm text-gray-700">{event.name}</span>
+                    <span className="text-sm text-charcoal-light group-hover:text-charcoal transition-colors">
+                      {event.name}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -248,14 +246,14 @@ export default function AddGuestModal({
 
           <button
             onClick={addGuestRow}
-            className="text-blue-600 text-sm font-medium hover:text-blue-700"
+            className="text-gold text-sm font-medium hover:text-gold-dark transition-colors"
           >
             + Add another guest to this party
           </button>
 
           {/* Address */}
-          <div className="border-t border-gray-100 pt-5">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+          <div className="border-t border-gold/8 pt-5">
+            <p className="label-caps mb-3">
               Address (shared by party — optional)
             </p>
             <input
@@ -263,7 +261,7 @@ export default function AddGuestModal({
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Street address"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 mb-3"
+              className="admin-input mb-3"
             />
             <div className="grid grid-cols-3 gap-3">
               <input
@@ -271,48 +269,48 @@ export default function AddGuestModal({
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="City"
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
               />
               <input
                 type="text"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
                 placeholder="State"
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
               />
               <input
                 type="text"
                 value={zip}
                 onChange={(e) => setZip(e.target.value)}
                 placeholder="Zip"
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
               />
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 px-6 py-4 border-t border-gray-100">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 px-6 py-5 border-t border-gold/10">
           <button
             onClick={onClose}
-            className="px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
+            className="admin-btn-secondary"
             disabled={saving}
           >
             Cancel
           </button>
           <button
             onClick={() => handleSave(true)}
-            className="px-4 py-2.5 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50"
+            className="admin-btn-outline"
             disabled={saving}
           >
-            {saving ? "Saving…" : "Save & Add Another"}
+            {saving ? "Saving..." : "Save & Add Another"}
           </button>
           <button
             onClick={() => handleSave(false)}
-            className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="admin-btn-primary"
             disabled={saving}
           >
-            {saving ? "Saving…" : "Save & Close"}
+            {saving ? "Saving..." : "Save & Close"}
           </button>
         </div>
       </div>

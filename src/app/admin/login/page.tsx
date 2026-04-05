@@ -37,19 +37,17 @@ export default function AdminLoginPage() {
   return (
     <div className="admin-layout flex items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-sm">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="admin-card p-8">
           <div className="text-center mb-8">
-            <h1 className="text-xl font-semibold text-gray-900">
-              Guest Manager
+            <h1 className="font-display text-2xl text-charcoal tracking-wide">
+              Ahad &amp; Sana
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Ahad &amp; Sana — Admin
-            </p>
+            <p className="label-caps mt-2">Guest Manager</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+              <div className="bg-blush/40 border border-blush-deep/30 text-charcoal-light text-sm rounded-xl px-4 py-3">
                 {error}
               </div>
             )}
@@ -57,7 +55,7 @@ export default function AdminLoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="label-caps block mb-2"
               >
                 Password
               </label>
@@ -67,7 +65,7 @@ export default function AdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter admin password"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
                 autoFocus
               />
             </div>
@@ -75,9 +73,9 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full py-2.5 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="admin-btn-primary w-full py-3"
             >
-              {loading ? "Signing in…" : "Sign In"}
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
         </div>

@@ -35,10 +35,10 @@ interface EventOption {
   name: string;
 }
 
-interface FlatGuest {
+interface GroupedParty {
   partyId: number;
   partyName: string;
-  guest: GuestData;
+  guests: GuestData[];
 }
 
 export default function GuestTable({
@@ -53,30 +53,38 @@ export default function GuestTable({
   const [search, setSearch] = useState("");
   const [editingGuest, setEditingGuest] = useState<GuestData | null>(null);
 
-  const flatGuests = useMemo<FlatGuest[]>(() => {
-    const result: FlatGuest[] = [];
+  const groupedParties = useMemo<GroupedParty[]>(() => {
+    if (!search.trim()) {
+      return parties.map((p) => ({
+        partyId: p.id,
+        partyName: p.name,
+        guests: p.guests,
+      }));
+    }
+    const q = search.toLowerCase();
+    const result: GroupedParty[] = [];
     for (const party of parties) {
-      for (const guest of party.guests) {
+      const matchingGuests = party.guests.filter(
+        (g) =>
+          g.first_name.toLowerCase().includes(q) ||
+          g.last_name.toLowerCase().includes(q) ||
+          party.name.toLowerCase().includes(q)
+      );
+      if (matchingGuests.length > 0) {
         result.push({
           partyId: party.id,
           partyName: party.name,
-          guest,
+          guests: matchingGuests,
         });
       }
     }
     return result;
-  }, [parties]);
+  }, [parties, search]);
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return flatGuests;
-    const q = search.toLowerCase();
-    return flatGuests.filter(
-      (fg) =>
-        fg.guest.first_name.toLowerCase().includes(q) ||
-        fg.guest.last_name.toLowerCase().includes(q) ||
-        fg.partyName.toLowerCase().includes(q)
-    );
-  }, [flatGuests, search]);
+  const totalGuests = groupedParties.reduce(
+    (sum, p) => sum + p.guests.length,
+    0
+  );
 
   const handleStatusChange = useCallback(
     async (invitationId: number, newStatus: string) => {
@@ -114,125 +122,175 @@ export default function GuestTable({
   );
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+    <div className="admin-card overflow-hidden">
       {/* Search Bar */}
-      <div className="px-4 py-3 border-b border-gray-100">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search guests or parties…"
-          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-        />
+      <div className="px-5 py-4 border-b border-gold/8">
+        <div className="relative">
+          <svg
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gold/40"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search guests or parties..."
+            className="admin-input"
+            style={{ paddingLeft: 44 }}
+          />
+        </div>
       </div>
 
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="admin-table">
           <thead>
-            <tr className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <th className="px-4 py-3">Party</th>
-              <th className="px-4 py-3">Guest</th>
+            <tr>
+              <th>Party</th>
+              <th>Guest</th>
               {events.map((e) => (
-                <th key={e.id} className="px-4 py-3">
-                  {e.name}
-                </th>
+                <th key={e.id}>{e.name}</th>
               ))}
-              <th className="px-4 py-3">Contact</th>
-              <th className="px-4 py-3 w-20">Actions</th>
+              <th>Contact</th>
+              <th className="w-20">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
-            {filtered.map((fg) => (
-              <tr
-                key={fg.guest.id}
-                className="hover:bg-blue-50/30 cursor-pointer transition-colors"
-                onClick={() => setEditingGuest(fg.guest)}
-              >
-                <td className="px-4 py-3 text-gray-700">{fg.partyName}</td>
-                <td className="px-4 py-3 font-medium text-gray-900">
-                  {fg.guest.first_name} {fg.guest.last_name}
-                </td>
-                {events.map((event) => {
-                  const inv = getInvitation(fg.guest, event.name);
-                  return (
-                    <td
-                      key={event.id}
-                      className="px-4 py-3"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {inv ? (
-                        <StatusBadge
-                          status={inv.status}
-                          onChange={(newStatus) =>
-                            handleStatusChange(inv.id, newStatus)
-                          }
-                        />
+          <tbody>
+            {groupedParties.map((party) =>
+              party.guests.map((guest, gi) => {
+                const isFirst = gi === 0;
+                const isLast = gi === party.guests.length - 1;
+                const isMulti = party.guests.length > 1;
+
+                let rowClass = "";
+                if (isMulti) {
+                  if (isFirst) rowClass = "party-group party-group-first";
+                  else if (isLast) rowClass = "party-group party-group-last";
+                  else rowClass = "party-group party-group-middle";
+                }
+
+                return (
+                  <tr
+                    key={guest.id}
+                    className={rowClass}
+                    onClick={() => setEditingGuest(guest)}
+                  >
+                    <td className="text-stone-warm">
+                      {isMulti && <div className="party-group-bar" />}
+                      {isFirst ? (
+                        <span className="font-medium text-charcoal-light text-[13px]">
+                          {party.partyName}
+                        </span>
                       ) : (
-                        <NotInvitedBadge />
+                        <span className="text-transparent select-none text-[13px]">
+                          {party.partyName}
+                        </span>
                       )}
                     </td>
-                  );
-                })}
-                <td className="px-4 py-3 text-gray-500 text-xs">
-                  {fg.guest.email || fg.guest.phone || "—"}
-                </td>
-                <td
-                  className="px-4 py-3"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    onClick={() => handleDeleteParty(fg.partyId)}
-                    className="text-gray-400 hover:text-red-500 text-xs"
-                    title="Delete party"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+                    <td className="font-medium text-charcoal">
+                      {guest.first_name} {guest.last_name}
+                    </td>
+                    {events.map((event) => {
+                      const inv = getInvitation(guest, event.name);
+                      return (
+                        <td
+                          key={event.id}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {inv ? (
+                            <StatusBadge
+                              status={inv.status}
+                              onChange={(newStatus) =>
+                                handleStatusChange(inv.id, newStatus)
+                              }
+                            />
+                          ) : (
+                            <NotInvitedBadge />
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="text-stone-warm text-xs">
+                      {guest.email || guest.phone || "—"}
+                    </td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      {isFirst && (
+                        <button
+                          onClick={() => handleDeleteParty(party.partyId)}
+                          className="text-stone-warm/40 hover:text-red-400 text-xs transition-colors"
+                          title="Delete party"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
-        {filtered.length === 0 && (
-          <div className="px-4 py-12 text-center text-sm text-gray-400">
+        {totalGuests === 0 && (
+          <div className="px-4 py-16 text-center text-sm text-stone-warm">
             {search ? "No guests match your search." : "No guests added yet."}
           </div>
         )}
       </div>
 
       {/* Mobile Card Layout */}
-      <div className="md:hidden divide-y divide-gray-100">
-        {filtered.map((fg) => (
-          <div
-            key={fg.guest.id}
-            className="p-4 active:bg-blue-50/30"
-            onClick={() => setEditingGuest(fg.guest)}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-medium text-gray-900">
-                  {fg.guest.first_name} {fg.guest.last_name}
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5">{fg.partyName}</p>
-              </div>
-              <div className="flex gap-1.5">
-                {events.map((event) => {
-                  const inv = getInvitation(fg.guest, event.name);
-                  return inv ? (
-                    <StatusBadge key={event.id} status={inv.status} />
-                  ) : null;
-                })}
-              </div>
+      <div className="md:hidden">
+        {groupedParties.map((party) => (
+          <div key={party.partyId} className="border-b border-gold/8 last:border-b-0">
+            {/* Party header */}
+            <div className="px-4 pt-3 pb-1 flex items-center justify-between">
+              <p className="label-caps text-[10px]">{party.partyName}</p>
+              <button
+                onClick={() => handleDeleteParty(party.partyId)}
+                className="text-stone-warm/30 hover:text-red-400 text-[10px] transition-colors"
+              >
+                Delete
+              </button>
             </div>
-            {(fg.guest.email || fg.guest.phone) && (
-              <p className="text-xs text-gray-400 mt-2">
-                {fg.guest.email || fg.guest.phone}
-              </p>
-            )}
+            {/* Guests in party */}
+            {party.guests.map((guest) => (
+              <div
+                key={guest.id}
+                className="px-4 py-3 ml-3 border-l-2 border-gold/15 active:bg-gold/5 transition-colors"
+                onClick={() => setEditingGuest(guest)}
+              >
+                <div className="flex items-start justify-between">
+                  <p className="font-medium text-charcoal text-sm">
+                    {guest.first_name} {guest.last_name}
+                  </p>
+                  <div className="flex gap-1.5">
+                    {events.map((event) => {
+                      const inv = getInvitation(guest, event.name);
+                      return inv ? (
+                        <StatusBadge key={event.id} status={inv.status} />
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+                {(guest.email || guest.phone) && (
+                  <p className="text-xs text-stone-warm/60 mt-1">
+                    {guest.email || guest.phone}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
         ))}
-        {filtered.length === 0 && (
-          <div className="p-8 text-center text-sm text-gray-400">
+        {totalGuests === 0 && (
+          <div className="p-12 text-center text-sm text-stone-warm">
             {search ? "No guests match your search." : "No guests added yet."}
           </div>
         )}

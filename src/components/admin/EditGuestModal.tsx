@@ -120,14 +120,14 @@ export default function EditGuestModal({
   }, [guest.id, onSaved, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg my-8">
+    <div className="admin-modal-overlay">
+      <div className="admin-modal max-w-lg">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">Edit Guest</h2>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gold/10">
+          <h2 className="font-display text-xl text-charcoal">Edit Guest</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+            className="text-stone-warm/40 hover:text-stone-warm transition-colors text-xl leading-none"
           >
             ×
           </button>
@@ -135,97 +135,87 @@ export default function EditGuestModal({
 
         <div className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">
+            <div className="bg-blush/40 border border-blush-deep/30 text-charcoal-light text-sm rounded-xl px-4 py-3">
               {error}
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                First Name
-              </label>
+              <label className="label-caps block mb-2">First Name</label>
               <input
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name
-              </label>
+              <label className="label-caps block mb-2">Last Name</label>
               <input
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
+              <label className="label-caps block mb-2">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Optional"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone
-              </label>
+              <label className="label-caps block mb-2">Phone</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Optional"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
               />
             </div>
           </div>
 
           {/* Event checkboxes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Invited to
-            </label>
-            <div className="flex gap-4">
+            <label className="label-caps block mb-2">Invited to</label>
+            <div className="flex gap-5">
               {events.map((event) => (
                 <label
                   key={event.id}
-                  className="flex items-center gap-2 cursor-pointer"
+                  className="flex items-center gap-2 cursor-pointer group"
                 >
                   <input
                     type="checkbox"
                     checked={eventIds.includes(event.id)}
                     onChange={() => toggleEvent(event.id)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="admin-checkbox"
                   />
-                  <span className="text-sm text-gray-700">{event.name}</span>
+                  <span className="text-sm text-charcoal-light group-hover:text-charcoal transition-colors">
+                    {event.name}
+                  </span>
                 </label>
               ))}
             </div>
           </div>
 
           {/* Address */}
-          <div className="border-t border-gray-100 pt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Address
-            </label>
+          <div className="border-t border-gold/8 pt-4">
+            <label className="label-caps block mb-2">Address</label>
             <input
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Street address"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 mb-3"
+              className="admin-input mb-3"
             />
             <div className="grid grid-cols-3 gap-3">
               <input
@@ -233,40 +223,40 @@ export default function EditGuestModal({
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="City"
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
               />
               <input
                 type="text"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
                 placeholder="State"
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
               />
               <input
                 type="text"
                 value={zip}
                 onChange={(e) => setZip(e.target.value)}
                 placeholder="Zip"
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="admin-input"
               />
             </div>
           </div>
 
           {/* Delete section */}
-          <div className="border-t border-gray-100 pt-4">
+          <div className="border-t border-gold/8 pt-4">
             {confirmDelete ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-red-600">Are you sure?</span>
+                <span className="text-sm text-red-400">Are you sure?</span>
                 <button
                   onClick={handleDelete}
-                  className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                  className="px-4 py-1.5 text-sm font-medium text-white bg-red-400 rounded-full hover:bg-red-500 transition-colors disabled:opacity-50"
                   disabled={deleting}
                 >
-                  {deleting ? "Deleting…" : "Yes, delete"}
+                  {deleting ? "Deleting..." : "Yes, delete"}
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900"
+                  className="text-sm text-stone-warm hover:text-charcoal transition-colors"
                 >
                   Cancel
                 </button>
@@ -274,7 +264,7 @@ export default function EditGuestModal({
             ) : (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="text-sm text-red-500 hover:text-red-700"
+                className="text-sm text-red-300 hover:text-red-400 transition-colors"
               >
                 Delete this guest
               </button>
@@ -283,20 +273,20 @@ export default function EditGuestModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100">
+        <div className="flex justify-end gap-3 px-6 py-5 border-t border-gold/10">
           <button
             onClick={onClose}
-            className="px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
+            className="admin-btn-secondary"
             disabled={saving}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="admin-btn-primary"
             disabled={saving}
           >
-            {saving ? "Saving…" : "Save Changes"}
+            {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
