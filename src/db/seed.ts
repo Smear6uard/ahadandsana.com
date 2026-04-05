@@ -15,7 +15,7 @@ const seedEvents: Array<{
   {
     name: "Mehndi",
     date: "2026-07-16",
-    time: "6:00 PM",
+    time: "6:30 PM",
     venueName: "The Canvas Venue",
     venueAddress: "97 East Marquardt Drive, Wheeling, IL 60090",
     googleMapsUrl: "https://maps.google.com/?q=97+East+Marquardt+Drive+Wheeling+IL+60090",
@@ -23,7 +23,7 @@ const seedEvents: Array<{
   {
     name: "Shadi",
     date: "2026-07-17",
-    time: "5:30 PM",
+    time: "7:00 PM",
     venueName: "Chicago Cultural Center",
     venueAddress: "78 East Washington Street, Chicago, IL 60602",
     googleMapsUrl: "https://maps.google.com/?q=78+East+Washington+Street+Chicago+IL+60602",

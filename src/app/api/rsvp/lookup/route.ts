@@ -7,12 +7,15 @@ import { rsvpLookupSchema } from "@/lib/validations";
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const { name } = parseSearchParams(
-      { name: url.searchParams.get("name") ?? "" },
+    const { first_name, last_name } = parseSearchParams(
+      {
+        first_name: url.searchParams.get("first_name") ?? "",
+        last_name: url.searchParams.get("last_name") ?? "",
+      },
       rsvpLookupSchema,
     );
 
-    const results = await getPublicPartiesByLookup(name);
+    const results = await getPublicPartiesByLookup(first_name, last_name);
     return NextResponse.json(results);
   } catch (error) {
     return handleRouteError(error);

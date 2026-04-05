@@ -1,4 +1,4 @@
-import { asc, eq, ilike, inArray } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray } from "drizzle-orm";
 
 import { db } from "@/db";
 import { events, guests, parties } from "@/db/schema";
@@ -116,8 +116,13 @@ export type PublicPartyResponse = {
     name: string;
     invitations: Array<{
       invitation_id: number;
+      event_id: number;
       event_name: string;
       event_date: string;
+      event_time: string;
+      venue_name: string;
+      venue_address: string;
+      google_maps_url: string;
       status: string;
     }>;
   }>;
@@ -186,8 +191,13 @@ function serializePublicParty(party: PublicPartyRecord): PublicPartyResponse {
       name: [guest.firstName, guest.lastName].join(" ").trim(),
       invitations: guest.invitations.map((invitation) => ({
         invitation_id: invitation.id,
+        event_id: invitation.eventId,
         event_name: invitation.event.name,
         event_date: invitation.event.date,
+        event_time: invitation.event.time,
+        venue_name: invitation.event.venueName,
+        venue_address: invitation.event.venueAddress,
+        google_maps_url: invitation.event.googleMapsUrl,
         status: invitation.status,
       })),
     })),
@@ -232,11 +242,16 @@ export async function getPublicPartyById(partyId: number) {
   return party ? serializePublicParty(party) : null;
 }
 
-export async function getPublicPartiesByLookup(name: string) {
+export async function getPublicPartiesByLookup(firstName: string, lastName: string) {
   const matchedPartyIds = await db
     .selectDistinct({ partyId: guests.partyId })
     .from(guests)
-    .where(ilike(guests.lastName, `%${name}%`))
+    .where(
+      and(
+        ilike(guests.firstName, `%${firstName}%`),
+        ilike(guests.lastName, `%${lastName}%`),
+      ),
+    )
     .orderBy(asc(guests.partyId));
 
   const results = await fetchPublicPartiesRaw(

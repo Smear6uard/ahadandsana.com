@@ -67,6 +67,7 @@ interface EventInfo {
   mapsUrl: string;
   bgColor: string;
   direction: "left" | "right";
+  adultsOnly?: boolean;
 }
 
 const eventData: EventInfo[] = [
@@ -74,7 +75,7 @@ const eventData: EventInfo[] = [
     icon: <MehndiIcon />,
     title: "Mehndi",
     date: "Thursday, July 16, 2026",
-    time: "6:00 PM",
+    time: "6:30 PM",
     venue: "The Canvas Venue",
     address: "97 East Marquardt Drive, Wheeling, IL 60090",
     mapsUrl:
@@ -86,13 +87,14 @@ const eventData: EventInfo[] = [
     icon: <ShadiIcon />,
     title: "Shadi",
     date: "Friday, July 17, 2026",
-    time: "5:30 PM",
+    time: "7:00 PM",
     venue: "Chicago Cultural Center",
     address: "78 East Washington Street, Chicago, IL 60602",
     mapsUrl:
       "https://maps.google.com/?q=78+East+Washington+Street+Chicago+IL+60602",
     bgColor: "bg-ivory-warm",
     direction: "right",
+    adultsOnly: true,
   },
 ];
 
@@ -178,6 +180,15 @@ export default function Events() {
                     </p>
                   </div>
                 </motion.div>
+
+                {event.adultsOnly && (
+                  <motion.p
+                    className="mt-6 font-display text-sm italic text-gold/80 tracking-wide"
+                    variants={childVariants}
+                  >
+                    Mr. &amp; Mrs. Only
+                  </motion.p>
+                )}
 
                 <motion.a
                   href={event.mapsUrl}

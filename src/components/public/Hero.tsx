@@ -145,16 +145,6 @@ export default function Hero() {
               <GoldFlourish delay={2.2} />
             </motion.div>
 
-            {/* Date & Location */}
-            <motion.p
-              className="label-caps mt-6 text-charcoal-light tracking-[0.2em] text-xs md:text-sm"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 2.6, duration: 0.5, ease: smooth }}
-            >
-              July 16 &amp; 17, 2026{" "}
-              <span className="text-gold mx-2">·</span> Chicago
-            </motion.p>
           </div>
         </div>
       </div>

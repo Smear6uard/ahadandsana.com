@@ -87,7 +87,8 @@ export const rsvpSubmitSchema = z.object({
 });
 
 export const rsvpLookupSchema = z.object({
-  name: z.string().trim().min(2, "name must be at least 2 characters."),
+  first_name: z.string().trim().min(1, "first_name is required."),
+  last_name: z.string().trim().min(1, "last_name is required."),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

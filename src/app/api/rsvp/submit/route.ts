@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db";
-import { guests, invitations, parties } from "@/db/schema";
+import { events, guests, invitations, parties } from "@/db/schema";
 import { ApiError, handleRouteError, parseJsonBody } from "@/lib/api";
+import { sendRsvpNotification } from "@/lib/email";
 import { getPublicPartyById } from "@/lib/queries";
 import { rsvpSubmitSchema } from "@/lib/validations";
 
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
 
     const party = await db.query.parties.findFirst({
       where: eq(parties.id, body.party_id),
-      columns: { id: true },
+      columns: { id: true, name: true },
     });
 
     if (!party) {
@@ -24,9 +25,13 @@ export async function POST(request: Request) {
     const partyInvitations = await db
       .select({
         invitationId: invitations.id,
+        guestFirstName: guests.firstName,
+        guestLastName: guests.lastName,
+        eventName: events.name,
       })
       .from(invitations)
       .innerJoin(guests, eq(invitations.guestId, guests.id))
+      .innerJoin(events, eq(invitations.eventId, events.id))
       .where(
         and(
           eq(guests.partyId, body.party_id),
@@ -52,6 +57,28 @@ export async function POST(request: Request) {
           .where(eq(invitations.id, response.invitation_id));
       }
     });
+
+    // Build email notifications from the response data
+    const invitationMap = new Map(
+      partyInvitations.map((inv) => [inv.invitationId, inv]),
+    );
+
+    const notifications = body.responses
+      .filter((r) => r.status === "attending" || r.status === "declined")
+      .map((r) => {
+        const inv = invitationMap.get(r.invitation_id)!;
+        return {
+          guestName: `${inv.guestFirstName} ${inv.guestLastName}`,
+          partyName: party.name,
+          eventName: inv.eventName,
+          status: r.status as "attending" | "declined",
+        };
+      });
+
+    // Fire-and-forget — don't block the response on email delivery
+    sendRsvpNotification(notifications).catch((err) =>
+      console.error("Failed to send RSVP notification email:", err),
+    );
 
     const updatedParty = await getPublicPartyById(body.party_id);
 
