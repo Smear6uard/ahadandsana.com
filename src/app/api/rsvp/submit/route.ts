@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { events, guests, invitations, parties } from "@/db/schema";
 import { ApiError, handleRouteError, parseJsonBody } from "@/lib/api";
 import { sendRsvpNotification } from "@/lib/email";
+import { getGuestDisplayName } from "@/lib/guest-names";
 import { getPublicPartyById } from "@/lib/queries";
 import { rsvpSubmitSchema } from "@/lib/validations";
 
@@ -68,7 +69,10 @@ export async function POST(request: Request) {
       .map((r) => {
         const inv = invitationMap.get(r.invitation_id)!;
         return {
-          guestName: `${inv.guestFirstName} ${inv.guestLastName}`,
+          guestName: getGuestDisplayName({
+            firstName: inv.guestFirstName,
+            lastName: inv.guestLastName,
+          }),
           partyName: party.name,
           eventName: inv.eventName,
           status: r.status as "attending" | "declined",

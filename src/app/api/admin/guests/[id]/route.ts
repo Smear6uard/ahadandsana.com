@@ -33,34 +33,46 @@ export async function PUT(
     }
 
     await db.transaction(async (tx) => {
-      const guestUpdates = {
-        firstName: body.first_name,
-        lastName: body.last_name,
-        email: body.email ?? undefined,
-        phone: body.phone ?? undefined,
-        address: body.address ?? undefined,
-        city: body.city ?? undefined,
-        state: body.state ?? undefined,
-        zip: body.zip ?? undefined,
-      };
+      const guestUpdates: Partial<typeof guests.$inferInsert> = {};
 
-      const hasGuestUpdates = Object.values(guestUpdates).some(
-        (value) => value !== undefined,
-      );
+      if (body.first_name !== undefined) {
+        guestUpdates.firstName = body.first_name;
+      }
+
+      if (body.last_name !== undefined) {
+        guestUpdates.lastName = body.last_name;
+      }
+
+      if (body.email !== undefined) {
+        guestUpdates.email = body.email ?? null;
+      }
+
+      if (body.phone !== undefined) {
+        guestUpdates.phone = body.phone ?? null;
+      }
+
+      if (body.address !== undefined) {
+        guestUpdates.address = body.address ?? null;
+      }
+
+      if (body.city !== undefined) {
+        guestUpdates.city = body.city ?? null;
+      }
+
+      if (body.state !== undefined) {
+        guestUpdates.state = body.state ?? null;
+      }
+
+      if (body.zip !== undefined) {
+        guestUpdates.zip = body.zip ?? null;
+      }
+
+      const hasGuestUpdates = Object.keys(guestUpdates).length > 0;
 
       if (hasGuestUpdates) {
         await tx
           .update(guests)
-          .set({
-            firstName: body.first_name,
-            lastName: body.last_name,
-            email: body.email ?? null,
-            phone: body.phone ?? null,
-            address: body.address ?? null,
-            city: body.city ?? null,
-            state: body.state ?? null,
-            zip: body.zip ?? null,
-          })
+          .set(guestUpdates)
           .where(eq(guests.id, guestId));
       }
 

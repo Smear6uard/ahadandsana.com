@@ -1,6 +1,8 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
+import { eq } from "drizzle-orm";
+
 import { db } from "@/db";
 import { events } from "@/db/schema";
 
@@ -15,7 +17,7 @@ const seedEvents: Array<{
   {
     name: "Mehndi",
     date: "2026-07-16",
-    time: "6:30 PM",
+    time: "6:00 PM",
     venueName: "The Canvas Venue",
     venueAddress: "97 East Marquardt Drive, Wheeling, IL 60090",
     googleMapsUrl: "https://maps.google.com/?q=97+East+Marquardt+Drive+Wheeling+IL+60090",
@@ -33,13 +35,22 @@ const seedEvents: Array<{
 async function main() {
   const existing = await db.select({ id: events.id }).from(events);
 
-  if (existing.length > 0) {
-    console.log("Seed skipped: events table already contains data.");
-    return;
+  if (existing.length === 0) {
+    await db.insert(events).values(seedEvents);
+    console.log(`Inserted ${seedEvents.length} event records.`);
+  } else {
+    console.log("Events already exist. Skipping inserts and syncing event times.");
   }
 
-  await db.insert(events).values(seedEvents);
-  console.log(`Inserted ${seedEvents.length} event records.`);
+  await db
+    .update(events)
+    .set({ time: "6:00 PM" })
+    .where(eq(events.name, "Mehndi"));
+
+  await db
+    .update(events)
+    .set({ time: "7:00 PM" })
+    .where(eq(events.name, "Shadi"));
 }
 
 main()

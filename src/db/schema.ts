@@ -29,6 +29,7 @@ export const parties = pgTable("parties", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull().default(""),
   side: varchar("side", { length: 10, enum: partySides }),
+  sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 
@@ -39,8 +40,8 @@ export const guests = pgTable("guests", {
   partyId: integer("party_id")
     .notNull()
     .references(() => parties.id, { onDelete: "cascade" }),
-  firstName: varchar("first_name", { length: 100 }).notNull(),
-  lastName: varchar("last_name", { length: 100 }).notNull(),
+  firstName: varchar("first_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }),
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 20 }),
   address: text("address"),

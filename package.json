@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "db:migrate": "drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
+    "db:backfill-party-sort-order": "tsx src/db/backfill-party-sort-order.ts",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

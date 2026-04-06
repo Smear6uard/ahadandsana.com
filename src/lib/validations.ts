@@ -32,6 +32,38 @@ const optionalEmail = z.preprocess(
   z.email().max(255).optional(),
 );
 
+const optionalNullableTrimmedString = (maxLength: number) =>
+  z.preprocess(
+    (value) => {
+      if (value === null || value === undefined) {
+        return value;
+      }
+
+      if (typeof value !== "string") {
+        return value;
+      }
+
+      const trimmed = value.trim();
+      return trimmed.length === 0 ? null : trimmed;
+    },
+    z.string().max(maxLength).nullable().optional(),
+  );
+
+const optionalPositiveIntSearchParam = z.preprocess(
+  (value) => {
+    if (value === null || value === undefined || value === "") {
+      return undefined;
+    }
+
+    if (typeof value === "string") {
+      return Number(value);
+    }
+
+    return value;
+  },
+  positiveInt.optional(),
+);
+
 const eventIdsSchema = z
   .array(positiveInt)
   .refine((ids) => new Set(ids).size === ids.length, {
@@ -39,8 +71,8 @@ const eventIdsSchema = z
   });
 
 const guestBaseSchema = z.object({
-  first_name: z.string().trim().min(1).max(100),
-  last_name: z.string().trim().min(1).max(100),
+  first_name: optionalNullableTrimmedString(100),
+  last_name: optionalNullableTrimmedString(100),
   email: optionalEmail,
   phone: optionalTrimmedString(20),
   address: optionalTrimmedString(500),
@@ -66,11 +98,26 @@ export const createPartySchema = z.object({
 });
 
 export const updateGuestSchema = guestBaseSchema
-  .partial()
   .extend({
     event_ids: eventIdsSchema.optional(),
     side: z.enum(partySides).nullable().optional(),
   });
+
+export const updatePartySchema = z.object({
+  name: z.string().trim().min(1, "name is required.").max(255),
+});
+
+export const reorderPartiesSchema = z.object({
+  party_ids: z
+    .array(positiveInt)
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: "party_ids must not contain duplicates.",
+    }),
+});
+
+export const adminPartiesQuerySchema = z.object({
+  event_id: optionalPositiveIntSearchParam,
+});
 
 export const updateInvitationSchema = z.object({
   status: z.enum(invitationStatuses),
@@ -96,6 +143,7 @@ export const rsvpLookupSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreatePartyInput = z.infer<typeof createPartySchema>;
 export type UpdateGuestInput = z.infer<typeof updateGuestSchema>;
+export type UpdatePartyInput = z.infer<typeof updatePartySchema>;
 export type UpdateInvitationInput = z.infer<typeof updateInvitationSchema>;
 export type RsvpSubmitInput = z.infer<typeof rsvpSubmitSchema>;
 export type RsvpLookupInput = z.infer<typeof rsvpLookupSchema>;

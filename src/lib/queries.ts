@@ -1,12 +1,38 @@
 import { and, asc, eq, ilike, inArray } from "drizzle-orm";
 
 import { db } from "@/db";
-import { events, guests, parties } from "@/db/schema";
+import { events, guests, invitations, parties } from "@/db/schema";
 import { ApiError } from "@/lib/api";
+import { getGuestDisplayName, isPlusOneGuest } from "@/lib/guest-names";
 
-async function fetchAdminPartiesRaw() {
+async function getPartyIdsForEvent(eventId: number) {
+  const matches = await db
+    .selectDistinct({ partyId: guests.partyId })
+    .from(guests)
+    .innerJoin(invitations, eq(invitations.guestId, guests.id))
+    .where(eq(invitations.eventId, eventId))
+    .orderBy(asc(guests.partyId));
+
+  return matches.map((match) => match.partyId);
+}
+
+async function fetchAdminPartiesRaw(eventId?: number) {
+  let partyIds: number[] | undefined;
+
+  if (eventId !== undefined) {
+    partyIds = await getPartyIdsForEvent(eventId);
+
+    if (partyIds.length === 0) {
+      return [];
+    }
+  }
+
   return db.query.parties.findMany({
-    orderBy: (table, { asc: ascFn }) => [ascFn(table.id)],
+    where: partyIds ? inArray(parties.id, partyIds) : undefined,
+    orderBy: (table, { asc: ascFn }) => [
+      ascFn(table.sortOrder),
+      ascFn(table.createdAt),
+    ],
     with: {
       guests: {
         orderBy: (table, { asc: ascFn }) => [ascFn(table.id)],
@@ -63,7 +89,10 @@ async function fetchPublicPartiesRaw(partyIds: number[]) {
 
   return db.query.parties.findMany({
     where: inArray(parties.id, partyIds),
-    orderBy: (table, { asc: ascFn }) => [ascFn(table.id)],
+    orderBy: (table, { asc: ascFn }) => [
+      ascFn(table.sortOrder),
+      ascFn(table.createdAt),
+    ],
     with: {
       guests: {
         orderBy: (table, { asc: ascFn }) => [ascFn(table.id)],
@@ -88,10 +117,12 @@ export type AdminPartyResponse = {
   id: number;
   name: string;
   side: "ahad" | "sana" | null;
+  sort_order: number;
   guests: Array<{
     id: number;
-    first_name: string;
-    last_name: string;
+    first_name: string | null;
+    last_name: string | null;
+    is_plus_one: boolean;
     email: string | null;
     phone: string | null;
     address: string | null;
@@ -111,7 +142,6 @@ export type AdminGuestResponse = AdminPartyResponse["guests"][number];
 
 export type PublicPartyResponse = {
   party_id: number;
-  party_name: string;
   guests: Array<{
     guest_id: number;
     name: string;
@@ -144,10 +174,12 @@ function serializeAdminParty(party: AdminPartyRecord): AdminPartyResponse {
     id: party.id,
     name: party.name,
     side: party.side ?? null,
+    sort_order: party.sortOrder,
     guests: party.guests.map((guest) => ({
       id: guest.id,
-      first_name: guest.firstName,
-      last_name: guest.lastName,
+      first_name: guest.firstName ?? null,
+      last_name: guest.lastName ?? null,
+      is_plus_one: isPlusOneGuest(guest),
       email: guest.email ?? null,
       phone: guest.phone ?? null,
       address: guest.address ?? null,
@@ -167,8 +199,9 @@ function serializeAdminParty(party: AdminPartyRecord): AdminPartyResponse {
 function serializeAdminGuest(guest: AdminGuestRecord): AdminGuestResponse {
   return {
     id: guest.id,
-    first_name: guest.firstName,
-    last_name: guest.lastName,
+    first_name: guest.firstName ?? null,
+    last_name: guest.lastName ?? null,
+    is_plus_one: isPlusOneGuest(guest),
     email: guest.email ?? null,
     phone: guest.phone ?? null,
     address: guest.address ?? null,
@@ -187,10 +220,9 @@ function serializeAdminGuest(guest: AdminGuestRecord): AdminGuestResponse {
 function serializePublicParty(party: PublicPartyRecord): PublicPartyResponse {
   return {
     party_id: party.id,
-    party_name: party.name,
     guests: party.guests.map((guest) => ({
       guest_id: guest.id,
-      name: [guest.firstName, guest.lastName].join(" ").trim(),
+      name: getGuestDisplayName(guest),
       invitations: guest.invitations.map((invitation) => ({
         invitation_id: invitation.id,
         event_id: invitation.eventId,
@@ -223,8 +255,8 @@ export async function assertEventIdsExist(eventIds: number[]) {
   }
 }
 
-export async function getAdminParties() {
-  const results = await fetchAdminPartiesRaw();
+export async function getAdminParties(eventId?: number) {
+  const results = await fetchAdminPartiesRaw(eventId);
   return results.map(serializeAdminParty);
 }
 
