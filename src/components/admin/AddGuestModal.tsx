@@ -137,7 +137,7 @@ export default function AddGuestModal({
     <div className="admin-modal-overlay">
       <div className="admin-modal max-w-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gold/10">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gold/10 shrink-0">
           <h2 className="font-display text-xl text-charcoal">
             Add Guest Party
           </h2>
@@ -149,7 +149,7 @@ export default function AddGuestModal({
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto flex-1">
           {error && (
             <div className="bg-blush/40 border border-blush-deep/30 text-charcoal-light text-sm rounded-xl px-4 py-3">
               {error}
@@ -309,7 +309,7 @@ export default function AddGuestModal({
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 px-6 py-5 border-t border-gold/10">
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 px-6 py-5 border-t border-gold/10 shrink-0">
           <button
             onClick={onClose}
             className="admin-btn-secondary"

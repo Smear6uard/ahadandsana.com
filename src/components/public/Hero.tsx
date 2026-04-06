@@ -96,7 +96,7 @@ export default function Hero() {
           </motion.div>
 
           {/* Text Content */}
-          <div className="flex flex-col items-center text-center flex-1">
+          <div className="flex flex-col items-center text-center flex-1 max-w-xl mx-auto">
             {/* Top flourish */}
             <GoldFlourish delay={0.6} />
 
@@ -110,20 +110,31 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.8, ease: smooth }}
             >
-              بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
+              ب��سْمِ ا��لَّهِ الرَّحْمَنِ ال��َّحِيمِ
             </motion.p>
 
-            {/* Preamble */}
+            {/* Parents of the bride */}
             <motion.p
-              className="label-caps mt-4 text-gold"
-              initial={{ opacity: 0, y: 20 }}
+              className="mt-6 font-display text-[15px] md:text-[16px] text-charcoal-light tracking-[0.1em]"
+              style={{ fontVariant: "small-caps", textTransform: "lowercase" }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9, duration: 0.6, ease: smooth }}
+              transition={{ delay: 0.85, duration: 0.7, ease: smooth }}
             >
-              We kindly invite you to celebrate
+              Mr. Amer Akhtar &amp; Mrs. Nabila Akhtar
             </motion.p>
 
-            {/* Couple's Names */}
+            {/* Invitation line */}
+            <motion.p
+              className="mt-2 font-display text-[13px] md:text-[14px] text-stone-warm tracking-wide"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.95, duration: 0.7, ease: smooth }}
+            >
+              kindly invite you to celebrate the wedding of their daughter
+            </motion.p>
+
+            {/* Couple's Names — Sana first */}
             <div className="mt-6 md:mt-8">
               <motion.h1
                 className="font-script text-6xl sm:text-7xl md:text-8xl lg:text-[100px] leading-[0.95] text-charcoal font-normal"
@@ -131,7 +142,7 @@ export default function Hero() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1.1, duration: 0.8, ease: smooth }}
               >
-                Ahad
+                Sana
               </motion.h1>
 
               <motion.span
@@ -149,8 +160,18 @@ export default function Hero() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 1.6, duration: 0.8, ease: smooth }}
               >
-                Sana
+                Ahad
               </motion.h1>
+
+              {/* Parents of the groom */}
+              <motion.p
+                className="mt-2 font-body text-[11px] md:text-[12px] text-stone-warm/70 tracking-wide"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.8, duration: 0.7, ease: smooth }}
+              >
+                Son of Mohammed Baqi &amp; Ruqia Ali
+              </motion.p>
             </div>
 
             {/* Bottom flourish */}

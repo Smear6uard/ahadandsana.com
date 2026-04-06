@@ -323,7 +323,7 @@ export default function RSVPSection() {
                 )}
               </div>
               <p className="mt-8 text-stone-warm text-xs tracking-wide">
-                Please RSVP by June 15, 2026
+                Please RSVP by May 31, 2026
               </p>
             </motion.div>
           )}
@@ -341,9 +341,8 @@ export default function RSVPSection() {
                     onClick={() => selectParty(party)}
                     className="w-full px-6 py-4 bg-ivory-warm rounded-xl border border-gold/15 font-display text-lg text-charcoal hover:border-gold/40 hover:shadow-md transition-all duration-300"
                   >
-                    {party.party_name}
-                    <span className="block font-body text-xs text-stone-warm mt-1">
-                      {party.guests.map((g) => g.name).join(", ")}
+                    <span className="block font-body text-sm text-charcoal">
+                      {party.guests.map((g) => g.name || "Guest").join(", ")}
                     </span>
                   </button>
                 ))}
@@ -427,7 +426,7 @@ export default function RSVPSection() {
                           className="flex flex-col sm:flex-row items-center justify-between gap-3 py-3 border-b border-gold/10 last:border-0"
                         >
                           <p className="font-display text-lg text-charcoal">
-                            {guest.name}
+                            {guest.name || "Guest"}
                           </p>
                           <div className="flex gap-2">
                             <button

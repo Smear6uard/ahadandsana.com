@@ -21,14 +21,26 @@ export async function PUT(
     const partyId = parseRouteId(id, "party id");
     const body = await parseJsonBody(request, updatePartySchema);
 
-    const updated = await db
-      .update(parties)
-      .set({ name: body.name })
-      .where(eq(parties.id, partyId))
-      .returning({ id: parties.id });
+    const updates: Partial<typeof parties.$inferInsert> = {};
 
-    if (updated.length === 0) {
-      throw new ApiError(404, "Party not found.");
+    if (body.name !== undefined) {
+      updates.name = body.name;
+    }
+
+    if (body.side !== undefined) {
+      updates.side = body.side;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      const updated = await db
+        .update(parties)
+        .set(updates)
+        .where(eq(parties.id, partyId))
+        .returning({ id: parties.id });
+
+      if (updated.length === 0) {
+        throw new ApiError(404, "Party not found.");
+      }
     }
 
     const party = await getAdminPartyById(partyId);

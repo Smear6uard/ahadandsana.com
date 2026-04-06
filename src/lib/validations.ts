@@ -104,7 +104,12 @@ export const updateGuestSchema = guestBaseSchema
   });
 
 export const updatePartySchema = z.object({
-  name: z.string().trim().min(1, "name is required.").max(255),
+  name: z.string().trim().max(255).optional(),
+  side: z.enum(partySides).nullable().optional(),
+});
+
+export const addGuestToPartySchema = guestBaseSchema.extend({
+  event_ids: eventIdsSchema.min(1, "Guest must have at least one event."),
 });
 
 export const reorderPartiesSchema = z.object({
@@ -144,6 +149,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type CreatePartyInput = z.infer<typeof createPartySchema>;
 export type UpdateGuestInput = z.infer<typeof updateGuestSchema>;
 export type UpdatePartyInput = z.infer<typeof updatePartySchema>;
+export type AddGuestToPartyInput = z.infer<typeof addGuestToPartySchema>;
 export type UpdateInvitationInput = z.infer<typeof updateInvitationSchema>;
 export type RsvpSubmitInput = z.infer<typeof rsvpSubmitSchema>;
 export type RsvpLookupInput = z.infer<typeof rsvpLookupSchema>;

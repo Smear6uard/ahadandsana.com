@@ -1,8 +1,26 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import StatusBadge, { NotInvitedBadge } from "./StatusBadge";
-import EditGuestModal from "./EditGuestModal";
+import EditPartyModal from "./EditPartyModal";
 
 interface GuestInvitation {
   id: number;
@@ -13,8 +31,8 @@ interface GuestInvitation {
 
 interface GuestData {
   id: number;
-  first_name: string;
-  last_name: string;
+  first_name: string | null;
+  last_name: string | null;
   email: string | null;
   phone: string | null;
   address: string | null;
@@ -39,12 +57,218 @@ interface EventOption {
 }
 
 type SideFilter = "all" | "ahad" | "sana";
+type EventFilter = "all" | number;
 
-interface GroupedParty {
-  partyId: number;
-  partyName: string;
-  partySide: PartySide;
-  guests: GuestData[];
+function guestDisplayName(g: GuestData): string {
+  const name = [g.first_name, g.last_name].filter(Boolean).join(" ").trim();
+  return name || "Plus One";
+}
+
+function getPartyStatusSummary(party: Party) {
+  let attending = 0;
+  let pending = 0;
+  let declined = 0;
+  for (const g of party.guests) {
+    for (const inv of g.invitations) {
+      if (inv.status === "attending") attending++;
+      else if (inv.status === "invited") pending++;
+      else if (inv.status === "declined") declined++;
+    }
+  }
+  return { attending, pending, declined };
+}
+
+function DragHandle() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      className="text-stone-warm/30 group-hover:text-stone-warm/60 transition-colors shrink-0 cursor-grab active:cursor-grabbing touch-manipulation"
+    >
+      <circle cx="5" cy="3" r="1.2" fill="currentColor" />
+      <circle cx="11" cy="3" r="1.2" fill="currentColor" />
+      <circle cx="5" cy="8" r="1.2" fill="currentColor" />
+      <circle cx="11" cy="8" r="1.2" fill="currentColor" />
+      <circle cx="5" cy="13" r="1.2" fill="currentColor" />
+      <circle cx="11" cy="13" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function SortablePartyCard({
+  party,
+  events,
+  expanded,
+  onToggle,
+  onEdit,
+  onDelete,
+  onStatusChange,
+}: {
+  party: Party;
+  events: EventOption[];
+  expanded: boolean;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onStatusChange: (invitationId: number, newStatus: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: party.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.9 : 1,
+  };
+
+  const status = getPartyStatusSummary(party);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`admin-card overflow-hidden transition-shadow ${isDragging ? "shadow-xl" : ""}`}
+    >
+      {/* Party Header */}
+      <div className="flex items-center gap-3 px-4 py-3.5 sm:px-5 sm:py-4 group">
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="p-1 -ml-1 touch-manipulation"
+          aria-label="Drag to reorder"
+        >
+          <DragHandle />
+        </div>
+
+        {/* Party Info — clickable to expand */}
+        <button
+          onClick={onToggle}
+          className="flex-1 flex items-start sm:items-center flex-col sm:flex-row gap-1 sm:gap-3 text-left min-w-0"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className={`font-display text-base sm:text-lg text-charcoal truncate ${!party.name ? "italic text-stone-warm/50" : ""}`}>
+              {party.name || "Unnamed Party"}
+            </h3>
+            <span className="text-xs text-stone-warm shrink-0">
+              {party.guests.length} {party.guests.length === 1 ? "guest" : "guests"}
+            </span>
+          </div>
+          <div className="flex gap-1.5 shrink-0">
+            {status.attending > 0 && (
+              <span className="status-badge status-attending text-[11px] py-0.5 px-2">
+                {status.attending} attending
+              </span>
+            )}
+            {status.pending > 0 && (
+              <span className="status-badge status-invited text-[11px] py-0.5 px-2">
+                {status.pending} pending
+              </span>
+            )}
+            {status.declined > 0 && (
+              <span className="status-badge status-declined text-[11px] py-0.5 px-2">
+                {status.declined} declined
+              </span>
+            )}
+          </div>
+        </button>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={onEdit}
+            className="admin-btn-secondary text-xs px-3 py-1.5"
+          >
+            Edit
+          </button>
+          <button
+            onClick={onToggle}
+            className="text-stone-warm/40 hover:text-stone-warm transition-colors w-7 h-7 flex items-center justify-center"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+            >
+              <path
+                d="M2.5 4.5L6 8L9.5 4.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded Guest List */}
+      {expanded && (
+        <div className="border-t border-gold/8">
+          {party.guests.map((guest) => (
+            <div
+              key={guest.id}
+              className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-5 py-3 border-b border-gold/5 last:border-b-0 ml-6 sm:ml-8"
+            >
+              <p className="font-medium text-charcoal text-sm min-w-[140px]">
+                {guestDisplayName(guest)}
+              </p>
+              <div className="flex flex-wrap gap-2 flex-1">
+                {events.map((event) => {
+                  const inv = guest.invitations.find(
+                    (i) => i.event_name === event.name
+                  );
+                  return (
+                    <div key={event.id} className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-stone-warm/60 uppercase tracking-wider font-medium min-w-[50px]">
+                        {event.name}
+                      </span>
+                      {inv ? (
+                        <StatusBadge
+                          status={inv.status}
+                          onChange={(newStatus) =>
+                            onStatusChange(inv.id, newStatus)
+                          }
+                        />
+                      ) : (
+                        <NotInvitedBadge />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {(guest.email || guest.phone) && (
+                <span className="text-xs text-stone-warm/50 sm:text-right shrink-0">
+                  {guest.email || guest.phone}
+                </span>
+              )}
+            </div>
+          ))}
+
+          {/* Delete party button at bottom of expanded view */}
+          <div className="px-5 py-2.5 border-t border-gold/5 flex justify-end">
+            <button
+              onClick={onDelete}
+              className="text-stone-warm/40 hover:text-red-400 text-xs transition-colors"
+            >
+              Delete party
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function GuestTable({
@@ -58,49 +282,88 @@ export default function GuestTable({
 }) {
   const [search, setSearch] = useState("");
   const [sideFilter, setSideFilter] = useState<SideFilter>("all");
-  const [editingGuest, setEditingGuest] = useState<GuestData | null>(null);
-  const [editingPartySide, setEditingPartySide] = useState<PartySide>(null);
+  const [eventFilter, setEventFilter] = useState<EventFilter>("all");
+  const [expandedParties, setExpandedParties] = useState<Set<number>>(new Set());
+  const [editingParty, setEditingParty] = useState<Party | null>(null);
+  const [partyOrder, setPartyOrder] = useState<number[] | null>(null);
 
-  const groupedParties = useMemo<GroupedParty[]>(() => {
-    let filtered = parties;
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const orderedParties = useMemo(() => {
+    if (!partyOrder) return parties;
+    const map = new Map(parties.map((p) => [p.id, p]));
+    const ordered: Party[] = [];
+    for (const id of partyOrder) {
+      const p = map.get(id);
+      if (p) ordered.push(p);
+    }
+    // Append any parties not in the order (newly added)
+    for (const p of parties) {
+      if (!partyOrder.includes(p.id)) ordered.push(p);
+    }
+    return ordered;
+  }, [parties, partyOrder]);
+
+  const filteredParties = useMemo(() => {
+    let filtered = orderedParties;
 
     if (sideFilter !== "all") {
       filtered = filtered.filter((p) => p.side === sideFilter);
     }
 
-    if (!search.trim()) {
-      return filtered.map((p) => ({
-        partyId: p.id,
-        partyName: p.name,
-        partySide: p.side,
-        guests: p.guests,
-      }));
-    }
-    const q = search.toLowerCase();
-    const result: GroupedParty[] = [];
-    for (const party of filtered) {
-      const matchingGuests = party.guests.filter(
-        (g) =>
-          g.first_name.toLowerCase().includes(q) ||
-          g.last_name.toLowerCase().includes(q) ||
-          party.name.toLowerCase().includes(q)
+    if (eventFilter !== "all") {
+      filtered = filtered.filter((p) =>
+        p.guests.some((g) =>
+          g.invitations.some((inv) => inv.event_id === eventFilter)
+        )
       );
-      if (matchingGuests.length > 0) {
-        result.push({
-          partyId: party.id,
-          partyName: party.name,
-          partySide: party.side,
-          guests: matchingGuests,
-        });
-      }
     }
-    return result;
-  }, [parties, search, sideFilter]);
 
-  const totalGuests = groupedParties.reduce(
-    (sum, p) => sum + p.guests.length,
-    0
-  );
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.guests.some(
+            (g) =>
+              (g.first_name || "").toLowerCase().includes(q) ||
+              (g.last_name || "").toLowerCase().includes(q)
+          )
+      );
+    }
+
+    return filtered;
+  }, [orderedParties, sideFilter, eventFilter, search]);
+
+  const sideCounts = useMemo(() => {
+    const all = parties.reduce((s, p) => s + p.guests.length, 0);
+    const ahad = parties
+      .filter((p) => p.side === "ahad")
+      .reduce((s, p) => s + p.guests.length, 0);
+    const sana = parties
+      .filter((p) => p.side === "sana")
+      .reduce((s, p) => s + p.guests.length, 0);
+    return { all, ahad, sana };
+  }, [parties]);
+
+  function toggleExpanded(partyId: number) {
+    setExpandedParties((prev) => {
+      const next = new Set(prev);
+      if (next.has(partyId)) next.delete(partyId);
+      else next.add(partyId);
+      return next;
+    });
+  }
 
   const handleStatusChange = useCallback(
     async (invitationId: number, newStatus: string) => {
@@ -112,15 +375,11 @@ export default function GuestTable({
         });
         if (res.ok) onRefresh();
       } catch {
-        // silently fail — status will revert on next refresh
+        // Will revert on next refresh
       }
     },
     [onRefresh]
   );
-
-  function getInvitation(guest: GuestData, eventName: string) {
-    return guest.invitations.find((inv) => inv.event_name === eventName);
-  }
 
   const handleDeleteParty = useCallback(
     async (partyId: number) => {
@@ -137,18 +396,37 @@ export default function GuestTable({
     [onRefresh]
   );
 
-  const sideCounts = useMemo(() => {
-    const all = parties.reduce((s, p) => s + p.guests.length, 0);
-    const ahad = parties.filter((p) => p.side === "ahad").reduce((s, p) => s + p.guests.length, 0);
-    const sana = parties.filter((p) => p.side === "sana").reduce((s, p) => s + p.guests.length, 0);
-    return { all, ahad, sana };
-  }, [parties]);
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const currentIds = filteredParties.map((p) => p.id);
+    const oldIndex = currentIds.indexOf(active.id as number);
+    const newIndex = currentIds.indexOf(over.id as number);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const allIds = orderedParties.map((p) => p.id);
+    const newOrder = arrayMove(allIds, allIds.indexOf(active.id as number), allIds.indexOf(over.id as number));
+    setPartyOrder(newOrder);
+
+    // Persist to backend
+    fetch("/api/admin/parties/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ party_ids: newOrder }),
+    }).catch(() => {
+      // Revert on failure
+      setPartyOrder(null);
+    });
+  }
+
+  const sortableIds = filteredParties.map((p) => p.id);
 
   return (
-    <div className="admin-card overflow-hidden">
-      {/* Side Filter + Search */}
-      <div className="px-5 pt-4 pb-3 border-b border-gold/8 space-y-3">
-        {/* Side filter tabs */}
+    <div className="space-y-4">
+      {/* Filters Bar */}
+      <div className="admin-card p-4 space-y-3">
+        {/* Side Filter Tabs */}
         <div className="side-filter-track">
           <button
             className={`side-filter-tab ${sideFilter === "all" ? "side-filter-active" : ""}`}
@@ -171,6 +449,33 @@ export default function GuestTable({
             {"Sana's List"}
             <span className="side-filter-count">{sideCounts.sana}</span>
           </button>
+        </div>
+
+        {/* Event Filter Tabs */}
+        <div className="flex gap-2">
+          <button
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+              eventFilter === "all"
+                ? "bg-charcoal text-ivory"
+                : "text-stone-warm hover:text-charcoal hover:bg-gold/5 border border-gold/15"
+            }`}
+            onClick={() => setEventFilter("all")}
+          >
+            All Events
+          </button>
+          {events.map((event) => (
+            <button
+              key={event.id}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                eventFilter === event.id
+                  ? "bg-charcoal text-ivory"
+                  : "text-stone-warm hover:text-charcoal hover:bg-gold/5 border border-gold/15"
+              }`}
+              onClick={() => setEventFilter(eventFilter === event.id ? "all" : event.id)}
+            >
+              {event.name}
+            </button>
+          ))}
         </div>
 
         {/* Search */}
@@ -199,162 +504,49 @@ export default function GuestTable({
         </div>
       </div>
 
-      {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Party</th>
-              <th>Guest</th>
-              {events.map((e) => (
-                <th key={e.id}>{e.name}</th>
-              ))}
-              <th>Contact</th>
-              <th className="w-20">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {groupedParties.map((party) =>
-              party.guests.map((guest, gi) => {
-                const isFirst = gi === 0;
-                const isLast = gi === party.guests.length - 1;
-                const isMulti = party.guests.length > 1;
-
-                let rowClass = "";
-                if (isMulti) {
-                  if (isFirst) rowClass = "party-group party-group-first";
-                  else if (isLast) rowClass = "party-group party-group-last";
-                  else rowClass = "party-group party-group-middle";
-                }
-
-                return (
-                  <tr
-                    key={guest.id}
-                    className={rowClass}
-                    onClick={() => { setEditingGuest(guest); setEditingPartySide(party.partySide); }}
-                  >
-                    <td className="text-stone-warm">
-                      {isMulti && <div className="party-group-bar" />}
-                      {isFirst ? (
-                        <span className={`text-[13px] ${party.partyName ? "font-medium text-charcoal-light" : "text-stone-warm/40 italic"}`}>
-                          {party.partyName || "—"}
-                        </span>
-                      ) : (
-                        <span className="text-transparent select-none text-[13px]">
-                          {party.partyName || "—"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="font-medium text-charcoal">
-                      {guest.first_name} {guest.last_name}
-                    </td>
-                    {events.map((event) => {
-                      const inv = getInvitation(guest, event.name);
-                      return (
-                        <td
-                          key={event.id}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {inv ? (
-                            <StatusBadge
-                              status={inv.status}
-                              onChange={(newStatus) =>
-                                handleStatusChange(inv.id, newStatus)
-                              }
-                            />
-                          ) : (
-                            <NotInvitedBadge />
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td className="text-stone-warm text-xs">
-                      {guest.email || guest.phone || "—"}
-                    </td>
-                    <td onClick={(e) => e.stopPropagation()}>
-                      {isFirst && (
-                        <button
-                          onClick={() => handleDeleteParty(party.partyId)}
-                          className="text-stone-warm/40 hover:text-red-400 text-xs transition-colors"
-                          title="Delete party"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-        {totalGuests === 0 && (
-          <div className="px-4 py-16 text-center text-sm text-stone-warm">
-            {search ? "No guests match your search." : "No guests added yet."}
-          </div>
-        )}
-      </div>
-
-      {/* Mobile Card Layout */}
-      <div className="md:hidden">
-        {groupedParties.map((party) => (
-          <div key={party.partyId} className="border-b border-gold/8 last:border-b-0">
-            {/* Party header */}
-            <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-              <p className={`label-caps text-[10px] ${!party.partyName ? "text-stone-warm/40 italic normal-case tracking-normal" : ""}`}>
-                {party.partyName || "No party name"}
-              </p>
-              <button
-                onClick={() => handleDeleteParty(party.partyId)}
-                className="text-stone-warm/30 hover:text-red-400 text-[10px] transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-            {/* Guests in party */}
-            {party.guests.map((guest) => (
-              <div
-                key={guest.id}
-                className="px-4 py-3 ml-3 border-l-2 border-gold/15 active:bg-gold/5 transition-colors"
-                onClick={() => { setEditingGuest(guest); setEditingPartySide(party.partySide); }}
-              >
-                <div className="flex items-start justify-between">
-                  <p className="font-medium text-charcoal text-sm">
-                    {guest.first_name} {guest.last_name}
-                  </p>
-                  <div className="flex gap-1.5">
-                    {events.map((event) => {
-                      const inv = getInvitation(guest, event.name);
-                      return inv ? (
-                        <StatusBadge key={event.id} status={inv.status} />
-                      ) : null;
-                    })}
-                  </div>
-                </div>
-                {(guest.email || guest.phone) && (
-                  <p className="text-xs text-stone-warm/60 mt-1">
-                    {guest.email || guest.phone}
-                  </p>
-                )}
-              </div>
+      {/* Party Cards with Drag and Drop */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={sortableIds}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-3">
+            {filteredParties.map((party) => (
+              <SortablePartyCard
+                key={party.id}
+                party={party}
+                events={events}
+                expanded={expandedParties.has(party.id)}
+                onToggle={() => toggleExpanded(party.id)}
+                onEdit={() => setEditingParty(party)}
+                onDelete={() => handleDeleteParty(party.id)}
+                onStatusChange={handleStatusChange}
+              />
             ))}
           </div>
-        ))}
-        {totalGuests === 0 && (
-          <div className="p-12 text-center text-sm text-stone-warm">
-            {search ? "No guests match your search." : "No guests added yet."}
-          </div>
-        )}
-      </div>
+        </SortableContext>
+      </DndContext>
 
-      {/* Edit Modal */}
-      {editingGuest && (
-        <EditGuestModal
-          guest={editingGuest}
-          partySide={editingPartySide}
+      {filteredParties.length === 0 && (
+        <div className="admin-card p-12 text-center text-sm text-stone-warm">
+          {search ? "No parties match your search." : "No guests added yet."}
+        </div>
+      )}
+
+      {/* Edit Party Modal */}
+      {editingParty && (
+        <EditPartyModal
+          party={editingParty}
           events={events}
-          onClose={() => setEditingGuest(null)}
-          onSaved={onRefresh}
+          onClose={() => setEditingParty(null)}
+          onSaved={() => {
+            setEditingParty(null);
+            onRefresh();
+          }}
         />
       )}
     </div>

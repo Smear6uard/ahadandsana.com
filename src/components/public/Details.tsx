@@ -59,8 +59,7 @@ export default function Details() {
           viewport={{ once: true, amount: 0.5 }}
           transition={{ delay: 0.4, duration: 0.7, ease: elegant }}
         >
-          More details coming soon — including parking information, dress code,
-          and accommodation recommendations.
+          Coming soon — parking, schedule details, and more.
         </motion.p>
 
         <motion.div
