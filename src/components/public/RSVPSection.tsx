@@ -150,7 +150,7 @@ export default function RSVPSection() {
   );
 
   const handleSearch = useCallback(async () => {
-    if (firstName.trim().length < 1 || lastName.trim().length < 1) return;
+    if (firstName.trim().length < 1 && lastName.trim().length < 1) return;
     setState("searching");
     setErrorMessage("");
 
@@ -312,7 +312,7 @@ export default function RSVPSection() {
                   <button
                     onClick={handleSearch}
                     disabled={
-                      firstName.trim().length < 1 ||
+                      firstName.trim().length < 1 &&
                       lastName.trim().length < 1
                     }
                     className="btn-gold mt-4 px-10 py-3.5 rounded-full text-sm tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"

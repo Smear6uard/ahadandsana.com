@@ -53,19 +53,27 @@ interface EventOption {
   name: string;
 }
 
+type EventFilter = "all" | number;
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [parties, setParties] = useState<Party[]>([]);
   const [events, setEvents] = useState<EventOption[]>([]);
+  const [eventFilter, setEventFilter] = useState<EventFilter>("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     try {
+      const partiesUrl =
+        eventFilter === "all"
+          ? "/api/admin/parties"
+          : `/api/admin/parties?event_id=${eventFilter}`;
+
       const [statsRes, partiesRes, eventsRes] = await Promise.all([
         fetch("/api/admin/stats"),
-        fetch("/api/admin/parties"),
+        fetch(partiesUrl),
         fetch("/api/rsvp/events"),
       ]);
 
@@ -93,7 +101,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [eventFilter, router]);
 
   useEffect(() => {
     fetchData();
@@ -149,7 +157,15 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
         <StatsCards stats={stats} />
-        <GuestTable parties={parties} events={events} onRefresh={fetchData} />
+        <GuestTable
+          parties={parties}
+          events={events}
+          eventFilter={eventFilter}
+          eventStats={stats?.by_event ?? []}
+          totalGuests={stats?.total_guests ?? 0}
+          onEventFilterChange={setEventFilter}
+          onRefresh={fetchData}
+        />
       </main>
 
       {/* Add Guest Modal */}

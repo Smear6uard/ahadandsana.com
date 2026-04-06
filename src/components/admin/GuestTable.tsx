@@ -56,6 +56,12 @@ interface EventOption {
   name: string;
 }
 
+interface EventStat {
+  event_id: number;
+  event_name: string;
+  invited: number;
+}
+
 type SideFilter = "all" | "ahad" | "sana";
 type EventFilter = "all" | number;
 
@@ -64,12 +70,27 @@ function guestDisplayName(g: GuestData): string {
   return name || "Plus One";
 }
 
-function getPartyStatusSummary(party: Party) {
+function getGuestsForEvent(party: Party, eventFilter: EventFilter) {
+  if (eventFilter === "all") {
+    return party.guests;
+  }
+
+  return party.guests.filter((guest) =>
+    guest.invitations.some((inv) => inv.event_id === eventFilter)
+  );
+}
+
+function getPartyStatusSummary(party: Party, eventFilter: EventFilter) {
   let attending = 0;
   let pending = 0;
   let declined = 0;
-  for (const g of party.guests) {
+
+  for (const g of getGuestsForEvent(party, eventFilter)) {
     for (const inv of g.invitations) {
+      if (eventFilter !== "all" && inv.event_id !== eventFilter) {
+        continue;
+      }
+
       if (inv.status === "attending") attending++;
       else if (inv.status === "invited") pending++;
       else if (inv.status === "declined") declined++;
@@ -100,6 +121,7 @@ function DragHandle() {
 function SortablePartyCard({
   party,
   events,
+  eventFilter,
   expanded,
   onToggle,
   onEdit,
@@ -108,6 +130,7 @@ function SortablePartyCard({
 }: {
   party: Party;
   events: EventOption[];
+  eventFilter: EventFilter;
   expanded: boolean;
   onToggle: () => void;
   onEdit: () => void;
@@ -130,7 +153,12 @@ function SortablePartyCard({
     opacity: isDragging ? 0.9 : 1,
   };
 
-  const status = getPartyStatusSummary(party);
+  const status = getPartyStatusSummary(party, eventFilter);
+  const visibleGuests = getGuestsForEvent(party, eventFilter);
+  const visibleEvents =
+    eventFilter === "all"
+      ? events
+      : events.filter((event) => event.id === eventFilter);
 
   return (
     <div
@@ -160,7 +188,7 @@ function SortablePartyCard({
               {party.name || "Unnamed Party"}
             </h3>
             <span className="text-xs text-stone-warm shrink-0">
-              {party.guests.length} {party.guests.length === 1 ? "guest" : "guests"}
+              {visibleGuests.length} {visibleGuests.length === 1 ? "guest" : "guests"}
             </span>
           </div>
           <div className="flex gap-1.5 shrink-0">
@@ -216,7 +244,7 @@ function SortablePartyCard({
       {/* Expanded Guest List */}
       {expanded && (
         <div className="border-t border-gold/8">
-          {party.guests.map((guest) => (
+          {visibleGuests.map((guest) => (
             <div
               key={guest.id}
               className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-5 py-3 border-b border-gold/5 last:border-b-0 ml-6 sm:ml-8"
@@ -225,9 +253,9 @@ function SortablePartyCard({
                 {guestDisplayName(guest)}
               </p>
               <div className="flex flex-wrap gap-2 flex-1">
-                {events.map((event) => {
+                {visibleEvents.map((event) => {
                   const inv = guest.invitations.find(
-                    (i) => i.event_name === event.name
+                    (i) => i.event_id === event.id
                   );
                   return (
                     <div key={event.id} className="flex items-center gap-1.5">
@@ -274,15 +302,22 @@ function SortablePartyCard({
 export default function GuestTable({
   parties,
   events,
+  eventFilter,
+  eventStats,
+  totalGuests,
+  onEventFilterChange,
   onRefresh,
 }: {
   parties: Party[];
   events: EventOption[];
+  eventFilter: EventFilter;
+  eventStats: EventStat[];
+  totalGuests: number;
+  onEventFilterChange: (filter: EventFilter) => void;
   onRefresh: () => void;
 }) {
   const [search, setSearch] = useState("");
   const [sideFilter, setSideFilter] = useState<SideFilter>("all");
-  const [eventFilter, setEventFilter] = useState<EventFilter>("all");
   const [expandedParties, setExpandedParties] = useState<Set<number>>(new Set());
   const [editingParty, setEditingParty] = useState<Party | null>(null);
   const [partyOrder, setPartyOrder] = useState<number[] | null>(null);
@@ -334,7 +369,7 @@ export default function GuestTable({
       filtered = filtered.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
-          p.guests.some(
+          getGuestsForEvent(p, eventFilter).some(
             (g) =>
               (g.first_name || "").toLowerCase().includes(q) ||
               (g.last_name || "").toLowerCase().includes(q)
@@ -346,15 +381,39 @@ export default function GuestTable({
   }, [orderedParties, sideFilter, eventFilter, search]);
 
   const sideCounts = useMemo(() => {
-    const all = parties.reduce((s, p) => s + p.guests.length, 0);
+    const countVisibleGuests = (party: Party) =>
+      getGuestsForEvent(party, eventFilter).length;
+    const all = parties.reduce((s, p) => s + countVisibleGuests(p), 0);
     const ahad = parties
       .filter((p) => p.side === "ahad")
-      .reduce((s, p) => s + p.guests.length, 0);
+      .reduce((s, p) => s + countVisibleGuests(p), 0);
     const sana = parties
       .filter((p) => p.side === "sana")
-      .reduce((s, p) => s + p.guests.length, 0);
+      .reduce((s, p) => s + countVisibleGuests(p), 0);
     return { all, ahad, sana };
-  }, [parties]);
+  }, [parties, eventFilter]);
+
+  const eventCounts = useMemo(
+    () => new Map(eventStats.map((event) => [event.event_id, event.invited])),
+    [eventStats],
+  );
+
+  const activeEvent = useMemo(
+    () =>
+      eventFilter === "all"
+        ? null
+        : events.find((event) => event.id === eventFilter) ?? null,
+    [eventFilter, events],
+  );
+
+  const filteredGuestCount = useMemo(
+    () =>
+      filteredParties.reduce(
+        (sum, party) => sum + getGuestsForEvent(party, eventFilter).length,
+        0,
+      ),
+    [eventFilter, filteredParties],
+  );
 
   function toggleExpanded(partyId: number) {
     setExpandedParties((prev) => {
@@ -456,26 +515,61 @@ export default function GuestTable({
           <button
             className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
               eventFilter === "all"
-                ? "bg-charcoal text-ivory"
+                ? "bg-charcoal text-ivory shadow-sm"
                 : "text-stone-warm hover:text-charcoal hover:bg-gold/5 border border-gold/15"
             }`}
-            onClick={() => setEventFilter("all")}
+            onClick={() => onEventFilterChange("all")}
           >
-            All Events
+            <span>All Events</span>
+            <span
+              className={`ml-2 rounded-full px-1.5 py-0.5 text-[10px] ${
+                eventFilter === "all"
+                  ? "bg-ivory/15 text-ivory"
+                  : "bg-gold/10 text-stone-warm"
+              }`}
+            >
+              {totalGuests}
+            </span>
           </button>
           {events.map((event) => (
             <button
               key={event.id}
               className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                 eventFilter === event.id
-                  ? "bg-charcoal text-ivory"
+                  ? "bg-charcoal text-ivory shadow-sm ring-1 ring-charcoal/10"
                   : "text-stone-warm hover:text-charcoal hover:bg-gold/5 border border-gold/15"
               }`}
-              onClick={() => setEventFilter(eventFilter === event.id ? "all" : event.id)}
+              onClick={() =>
+                onEventFilterChange(eventFilter === event.id ? "all" : event.id)
+              }
             >
-              {event.name}
+              <span>{event.name}</span>
+              <span
+                className={`ml-2 rounded-full px-1.5 py-0.5 text-[10px] ${
+                  eventFilter === event.id
+                    ? "bg-ivory/15 text-ivory"
+                    : "bg-gold/10 text-stone-warm"
+                }`}
+              >
+                {eventCounts.get(event.id) ?? 0}
+              </span>
             </button>
           ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {activeEvent ? (
+            <span className="inline-flex items-center gap-2 rounded-full bg-gold/10 px-3 py-1 text-charcoal">
+              <span className="h-2 w-2 rounded-full bg-gold" />
+              {activeEvent.name} filter active
+            </span>
+          ) : (
+            <span className="text-stone-warm">Showing all events</span>
+          )}
+          <span className="text-stone-warm">
+            {filteredParties.length} {filteredParties.length === 1 ? "party" : "parties"} •{" "}
+            {filteredGuestCount} {filteredGuestCount === 1 ? "guest" : "guests"}
+          </span>
         </div>
 
         {/* Search */}
@@ -520,6 +614,7 @@ export default function GuestTable({
                 key={party.id}
                 party={party}
                 events={events}
+                eventFilter={eventFilter}
                 expanded={expandedParties.has(party.id)}
                 onToggle={() => toggleExpanded(party.id)}
                 onEdit={() => setEditingParty(party)}
@@ -533,7 +628,11 @@ export default function GuestTable({
 
       {filteredParties.length === 0 && (
         <div className="admin-card p-12 text-center text-sm text-stone-warm">
-          {search ? "No parties match your search." : "No guests added yet."}
+          {search
+            ? "No parties match your search."
+            : activeEvent
+              ? `No parties found for ${activeEvent.name}.`
+              : "No guests added yet."}
         </div>
       )}
 
