@@ -1,8 +1,6 @@
 import { Resend } from "resend";
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface RsvpNotification {
   guestName: string;
@@ -11,26 +9,29 @@ interface RsvpNotification {
   status: "attending" | "declined";
 }
 
-export async function sendRsvpNotification(notifications: RsvpNotification[]) {
-  if (!resend) {
+export function sendRsvpNotification(notifications: RsvpNotification[]) {
+  if (!process.env.RESEND_API_KEY) {
     console.warn("RESEND_API_KEY not set — skipping email notification.");
     return;
   }
 
-  const lines = notifications.map(
-    (n) =>
-      `• ${n.guestName} (${n.partyName}) — ${n.eventName}: ${n.status === "attending" ? "Accepted" : "Declined"}`,
-  );
+  for (const { guestName, partyName, eventName, status } of notifications) {
+    const submittedAt = new Date().toLocaleString();
 
-  const subject =
-    notifications.length === 1
-      ? `RSVP: ${notifications[0].guestName} — ${notifications[0].eventName}`
-      : `RSVP Update: ${notifications[0].partyName}`;
-
-  await resend.emails.send({
-    from: "Wedding RSVP <onboarding@resend.dev>",
-    to: "ahadandsana@gmail.com",
-    subject,
-    text: `New RSVP Response\n\n${lines.join("\n")}\n`,
-  });
+    resend.emails.send({
+      from: "Wedding RSVP <onboarding@resend.dev>",
+      to: "ahadandsana@gmail.com",
+      subject: `RSVP: ${guestName} — ${eventName} — ${status}`,
+      html: `
+        <h2>New RSVP Response</h2>
+        <p><strong>Guest:</strong> ${guestName}</p>
+        <p><strong>Party:</strong> ${partyName}</p>
+        <p><strong>Event:</strong> ${eventName}</p>
+        <p><strong>Status:</strong> ${status}</p>
+        <p><em>Submitted at ${submittedAt}</em></p>
+      `,
+    }).catch((error) => {
+      console.error("Resend email failed:", error);
+    });
+  }
 }

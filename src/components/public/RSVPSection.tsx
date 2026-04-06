@@ -28,7 +28,6 @@ interface Guest {
 
 interface Party {
   party_id: number;
-  party_name: string;
   guests: Guest[];
 }
 

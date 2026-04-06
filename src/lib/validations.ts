@@ -140,10 +140,18 @@ export const rsvpSubmitSchema = z.object({
     .min(1, "At least one RSVP response is required."),
 });
 
-export const rsvpLookupSchema = z.object({
-  first_name: z.string().trim().min(1, "first_name is required."),
-  last_name: z.string().trim().min(1, "last_name is required."),
-});
+export const rsvpLookupSchema = z
+  .object({
+    first_name: optionalTrimmedString(100),
+    last_name: optionalTrimmedString(100),
+  })
+  .refine(
+    (value) => Boolean(value.first_name || value.last_name),
+    {
+      message: "At least one of first_name or last_name is required.",
+      path: ["first_name"],
+    },
+  );
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreatePartyInput = z.infer<typeof createPartySchema>;

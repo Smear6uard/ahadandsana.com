@@ -80,9 +80,7 @@ export async function POST(request: Request) {
       });
 
     // Fire-and-forget — don't block the response on email delivery
-    sendRsvpNotification(notifications).catch((err) =>
-      console.error("Failed to send RSVP notification email:", err),
-    );
+    sendRsvpNotification(notifications);
 
     const updatedParty = await getPublicPartyById(body.party_id);
 

@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, inArray } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, type SQL } from "drizzle-orm";
 
 import { db } from "@/db";
 import { events, guests, invitations, parties } from "@/db/schema";
@@ -276,23 +276,55 @@ export async function getPublicPartyById(partyId: number) {
   return party ? serializePublicParty(party) : null;
 }
 
-export async function getPublicPartiesByLookup(firstName: string, lastName: string) {
-  const matchedPartyIds = await db
+async function getMatchedPartyIds(whereClause: SQL) {
+  const matches = await db
     .selectDistinct({ partyId: guests.partyId })
     .from(guests)
-    .where(
+    .where(whereClause)
+    .orderBy(asc(guests.partyId));
+
+  return matches.map((match) => match.partyId);
+}
+
+export async function getPublicPartiesByLookup(
+  firstName?: string,
+  lastName?: string,
+) {
+  const queries = [];
+
+  if (firstName && lastName) {
+    queries.push(
       and(
         ilike(guests.firstName, `%${firstName}%`),
         ilike(guests.lastName, `%${lastName}%`),
       ),
-    )
-    .orderBy(asc(guests.partyId));
+    );
+  }
 
-  const results = await fetchPublicPartiesRaw(
-    matchedPartyIds.map((match) => match.partyId),
-  );
+  if (lastName) {
+    queries.push(ilike(guests.lastName, `%${lastName}%`));
+  }
 
-  return results.map(serializePublicParty);
+  if (firstName) {
+    queries.push(ilike(guests.firstName, `%${firstName}%`));
+  }
+
+  for (const whereClause of queries) {
+    if (!whereClause) {
+      continue;
+    }
+
+    const matchedPartyIds = await getMatchedPartyIds(whereClause);
+
+    if (matchedPartyIds.length === 0) {
+      continue;
+    }
+
+    const results = await fetchPublicPartiesRaw(matchedPartyIds);
+    return results.map(serializePublicParty);
+  }
+
+  return [];
 }
 
 export async function getPublicEvents(): Promise<PublicEventResponse[]> {
