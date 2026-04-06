@@ -110,7 +110,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.8, ease: smooth }}
             >
-              ب��سْمِ ا��لَّهِ الرَّحْمَنِ ال��َّحِيمِ
+              بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ
             </motion.p>
 
             {/* Parents of the bride */}
