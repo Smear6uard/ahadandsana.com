@@ -122,8 +122,6 @@ function SortablePartyCard({
   party,
   events,
   eventFilter,
-  expanded,
-  onToggle,
   onEdit,
   onDelete,
   onStatusChange,
@@ -131,8 +129,6 @@ function SortablePartyCard({
   party: Party;
   events: EventOption[];
   eventFilter: EventFilter;
-  expanded: boolean;
-  onToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onStatusChange: (invitationId: number, newStatus: string) => void;
@@ -178,11 +174,8 @@ function SortablePartyCard({
           <DragHandle />
         </div>
 
-        {/* Party Info — clickable to expand */}
-        <button
-          onClick={onToggle}
-          className="flex-1 flex items-start sm:items-center flex-col sm:flex-row gap-1 sm:gap-3 text-left min-w-0"
-        >
+        {/* Party Info */}
+        <div className="flex-1 flex items-start sm:items-center flex-col sm:flex-row gap-1 sm:gap-3 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
             <h3 className={`font-display text-base sm:text-lg text-charcoal truncate ${!party.name ? "italic text-stone-warm/50" : ""}`}>
               {party.name || "Unnamed Party"}
@@ -208,7 +201,7 @@ function SortablePartyCard({
               </span>
             )}
           </div>
-        </button>
+        </div>
 
         {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
@@ -218,32 +211,11 @@ function SortablePartyCard({
           >
             Edit
           </button>
-          <button
-            onClick={onToggle}
-            className="text-stone-warm/40 hover:text-stone-warm transition-colors w-7 h-7 flex items-center justify-center"
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
-            >
-              <path
-                d="M2.5 4.5L6 8L9.5 4.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
         </div>
       </div>
 
-      {/* Expanded Guest List */}
-      {expanded && (
-        <div className="border-t border-gold/8">
+      {/* Guest List (always expanded) */}
+      <div className="border-t border-gold/8">
           {visibleGuests.map((guest) => (
             <div
               key={guest.id}
@@ -284,7 +256,7 @@ function SortablePartyCard({
             </div>
           ))}
 
-          {/* Delete party button at bottom of expanded view */}
+          {/* Delete party button at bottom of guest list */}
           <div className="px-5 py-2.5 border-t border-gold/5 flex justify-end">
             <button
               onClick={onDelete}
@@ -294,7 +266,6 @@ function SortablePartyCard({
             </button>
           </div>
         </div>
-      )}
     </div>
   );
 }
@@ -318,7 +289,6 @@ export default function GuestTable({
 }) {
   const [search, setSearch] = useState("");
   const [sideFilter, setSideFilter] = useState<SideFilter>("all");
-  const [expandedParties, setExpandedParties] = useState<Set<number>>(new Set());
   const [editingParty, setEditingParty] = useState<Party | null>(null);
   const [partyOrder, setPartyOrder] = useState<number[] | null>(null);
 
@@ -414,15 +384,6 @@ export default function GuestTable({
       ),
     [eventFilter, filteredParties],
   );
-
-  function toggleExpanded(partyId: number) {
-    setExpandedParties((prev) => {
-      const next = new Set(prev);
-      if (next.has(partyId)) next.delete(partyId);
-      else next.add(partyId);
-      return next;
-    });
-  }
 
   const handleStatusChange = useCallback(
     async (invitationId: number, newStatus: string) => {
@@ -615,8 +576,6 @@ export default function GuestTable({
                 party={party}
                 events={events}
                 eventFilter={eventFilter}
-                expanded={expandedParties.has(party.id)}
-                onToggle={() => toggleExpanded(party.id)}
                 onEdit={() => setEditingParty(party)}
                 onDelete={() => handleDeleteParty(party.id)}
                 onStatusChange={handleStatusChange}

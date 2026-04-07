@@ -18,7 +18,7 @@ const seedEvents: Array<{
     name: "Mehndi",
     date: "2026-07-16",
     time: "6:00 PM",
-    venueName: "The Canvas Venue",
+    venueName: "Canvas Venue",
     venueAddress: "97 East Marquardt Drive, Wheeling, IL 60090",
     googleMapsUrl: "https://maps.google.com/?q=97+East+Marquardt+Drive+Wheeling+IL+60090",
   },
@@ -44,7 +44,7 @@ async function main() {
 
   await db
     .update(events)
-    .set({ time: "6:00 PM" })
+    .set({ time: "6:00 PM", venueName: "Canvas Venue" })
     .where(eq(events.name, "Mehndi"));
 
   await db

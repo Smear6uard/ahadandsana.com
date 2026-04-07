@@ -76,7 +76,7 @@ const eventData: EventInfo[] = [
     title: "Mehndi",
     date: "Thursday, July 16, 2026",
     time: "6:00 PM",
-    venue: "The Canvas Venue",
+    venue: "Canvas Venue",
     address: "97 East Marquardt Drive, Wheeling, IL 60090",
     mapsUrl:
       "https://maps.google.com/?q=97+East+Marquardt+Drive+Wheeling+IL+60090",

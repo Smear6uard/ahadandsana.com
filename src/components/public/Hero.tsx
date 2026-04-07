@@ -165,12 +165,13 @@ export default function Hero() {
 
               {/* Parents of the groom */}
               <motion.p
-                className="mt-2 font-body text-[11px] md:text-[12px] text-stone-warm/70 tracking-wide"
+                className="mt-3 font-display text-[11px] md:text-[12px] text-charcoal-light tracking-[0.1em]"
+                style={{ fontVariant: "small-caps", textTransform: "lowercase" }}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.8, duration: 0.7, ease: smooth }}
               >
-                Son of Mohammed Baqi &amp; Ruqia Ali
+                Son of Mr. Mohammed Baqi &amp; Ms. Ruqia Ali
               </motion.p>
             </div>
 

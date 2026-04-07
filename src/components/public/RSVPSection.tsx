@@ -2,6 +2,12 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useMemo, useState } from "react";
+import {
+  downloadICS,
+  generateGoogleCalendarUrl,
+  hasCalendarTimes,
+  type CalendarEventDetails,
+} from "@/lib/calendar";
 
 const elegant = [0.25, 0.1, 0.25, 1] as const;
 const smooth = [0.16, 1, 0.3, 1] as const;
@@ -132,6 +138,54 @@ function formatDate(dateStr: string) {
   });
 }
 
+function CalendarIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-3.5 h-3.5"
+      aria-hidden="true"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function CalendarButtons({ event }: { event: CalendarEventDetails }) {
+  if (!hasCalendarTimes(event.event_name)) return null;
+  const googleUrl = generateGoogleCalendarUrl(event);
+  if (!googleUrl) return null;
+
+  return (
+    <div className="flex flex-wrap justify-center gap-2">
+      <a
+        href={googleUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gold/40 text-gold hover:bg-gold hover:text-ivory hover:border-gold transition-all duration-300 font-display text-xs tracking-wide"
+      >
+        <CalendarIcon />
+        Add to Google Calendar
+      </a>
+      <button
+        type="button"
+        onClick={() => downloadICS(event)}
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gold/40 text-gold hover:bg-gold hover:text-ivory hover:border-gold transition-all duration-300 font-display text-xs tracking-wide"
+      >
+        <CalendarIcon />
+        Add to Apple Calendar
+      </button>
+    </div>
+  );
+}
+
 export default function RSVPSection() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -148,6 +202,17 @@ export default function RSVPSection() {
     () => (selectedParty ? getPartyEvents(selectedParty) : []),
     [selectedParty],
   );
+
+  const acceptedEvents = useMemo(() => {
+    if (!selectedParty) return [];
+    return partyEvents.filter((ev) => {
+      const guests = getGuestsForEvent(selectedParty, ev.event_id);
+      return guests.some((g) => {
+        const inv = g.invitations.find((i) => i.event_id === ev.event_id);
+        return inv && responses[inv.invitation_id] === "attending";
+      });
+    });
+  }, [selectedParty, partyEvents, responses]);
 
   const handleSearch = useCallback(async () => {
     if (firstName.trim().length < 1 && lastName.trim().length < 1) return;
@@ -401,6 +466,15 @@ export default function RSVPSection() {
                         Mr. &amp; Mrs. Only
                       </p>
                     )}
+                    <div className="mt-6">
+                      <CalendarButtons
+                        event={{
+                          event_name: currentEvent.event_name,
+                          venue_name: currentEvent.venue_name,
+                          venue_address: currentEvent.venue_address,
+                        }}
+                      />
+                    </div>
                   </div>
 
                   {/* Per-guest Accept/Decline */}
@@ -533,11 +607,42 @@ export default function RSVPSection() {
               >
                 Your response has been recorded.
               </motion.p>
+
+              {/* Add-to-calendar for accepted events */}
+              {acceptedEvents.length > 0 && (
+                <motion.div
+                  className="mt-8"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.85, duration: 0.5 }}
+                >
+                  <p className="label-caps text-stone-warm mb-3 text-[10px]">
+                    Save the date
+                  </p>
+                  <div className="space-y-3">
+                    {acceptedEvents.map((ev) => (
+                      <div key={ev.event_id}>
+                        <p className="font-display text-sm text-charcoal mb-2">
+                          {ev.event_name}
+                        </p>
+                        <CalendarButtons
+                          event={{
+                            event_name: ev.event_name,
+                            venue_name: ev.venue_name,
+                            venue_address: ev.venue_address,
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
               <motion.div
-                className="mt-6"
+                className="mt-8"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 }}
+                transition={{ delay: 1.0 }}
               >
                 <GoldFlourish />
               </motion.div>
@@ -546,7 +651,7 @@ export default function RSVPSection() {
                 className="link-gold text-sm font-body mt-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 1.1 }}
+                transition={{ delay: 1.2 }}
               >
                 RSVP for another guest
               </motion.button>
