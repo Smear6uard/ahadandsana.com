@@ -36,15 +36,16 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://ahadandsana.com"),
   title: "Ahad & Sana",
   description: "Join us in celebrating the wedding of Ahad & Sana",
   icons: {
-    icon: "/Elegant%20name%20design%20with%20gold%20ampersand.png",
+    icon: "/Elegant%20names%20with%20golden%20ampersand.png",
   },
   openGraph: {
     title: "Ahad & Sana",
     description: "Join us in celebrating the wedding of Ahad & Sana",
-    images: ["/Elegant%20name%20design%20with%20gold%20ampersand.png"],
+    images: ["/Elegant%20names%20with%20golden%20ampersand.png"],
     type: "website",
   },
 };
