@@ -36,13 +36,15 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Ahad & Sana — Summer 2026",
-  description:
-    "Join us in celebrating the wedding of Ahad and Sana. July 16 & 17, 2026 in Chicago.",
+  title: "Ahad & Sana",
+  description: "Join us in celebrating the wedding of Ahad & Sana",
+  icons: {
+    icon: "/Elegant%20name%20design%20with%20gold%20ampersand.png",
+  },
   openGraph: {
-    title: "Ahad & Sana — Wedding Celebration",
-    description:
-      "Join us in celebrating the wedding of Ahad and Sana. July 16 & 17, 2026 in Chicago.",
+    title: "Ahad & Sana",
+    description: "Join us in celebrating the wedding of Ahad & Sana",
+    images: ["/Elegant%20name%20design%20with%20gold%20ampersand.png"],
     type: "website",
   },
 };
