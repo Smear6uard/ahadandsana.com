@@ -121,7 +121,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.85, duration: 0.7, ease: smooth }}
             >
-              Mr. Amer Akhtar &amp; Mrs. Nabila Akhtar
+              Amer &amp; Nabila Akhtar
             </motion.p>
 
             {/* Invitation line */}
@@ -171,7 +171,7 @@ export default function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.8, duration: 0.7, ease: smooth }}
               >
-                Son of Mr. Mohammed Baqi &amp; Ms. Ruqia Ali
+                Son of Mohammed Baqi &amp; Ruqia Ali
               </motion.p>
             </div>
 
