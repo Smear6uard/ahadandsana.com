@@ -1,34 +1,72 @@
 import { and, asc, eq, ilike, inArray, type SQL } from "drizzle-orm";
 
 import { db } from "@/db";
-import { events, guests, invitations, parties } from "@/db/schema";
+import {
+  events,
+  guests,
+  invitations,
+  parties,
+  type InvitationStatus,
+  type PartySide,
+} from "@/db/schema";
 import { ApiError } from "@/lib/api";
 import { getGuestDisplayName, isPlusOneGuest } from "@/lib/guest-names";
 
-async function getPartyIdsForEvent(eventId: number) {
+type AdminPartiesFilters = {
+  eventId?: number;
+  side?: PartySide;
+  status?: InvitationStatus;
+};
+
+async function getPartyIdsForInvitationFilters(
+  eventId?: number,
+  status?: InvitationStatus,
+) {
+  const conditions: SQL[] = [];
+  if (eventId !== undefined) {
+    conditions.push(eq(invitations.eventId, eventId));
+  }
+  if (status !== undefined) {
+    conditions.push(eq(invitations.status, status));
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
   const matches = await db
     .selectDistinct({ partyId: guests.partyId })
     .from(guests)
     .innerJoin(invitations, eq(invitations.guestId, guests.id))
-    .where(eq(invitations.eventId, eventId))
+    .where(where)
     .orderBy(asc(guests.partyId));
 
   return matches.map((match) => match.partyId);
 }
 
-async function fetchAdminPartiesRaw(eventId?: number) {
-  let partyIds: number[] | undefined;
+async function fetchAdminPartiesRaw(filters: AdminPartiesFilters = {}) {
+  const { eventId, side, status } = filters;
+  const conditions: SQL[] = [];
 
-  if (eventId !== undefined) {
-    partyIds = await getPartyIdsForEvent(eventId);
-
+  if (eventId !== undefined || status !== undefined) {
+    const partyIds = await getPartyIdsForInvitationFilters(eventId, status);
     if (partyIds.length === 0) {
       return [];
     }
+    conditions.push(inArray(parties.id, partyIds));
   }
 
+  if (side !== undefined) {
+    conditions.push(eq(parties.side, side));
+  }
+
+  const where =
+    conditions.length === 0
+      ? undefined
+      : conditions.length === 1
+        ? conditions[0]
+        : and(...conditions);
+
   return db.query.parties.findMany({
-    where: partyIds ? inArray(parties.id, partyIds) : undefined,
+    where,
     orderBy: (table, { asc: ascFn }) => [
       ascFn(table.sortOrder),
       ascFn(table.createdAt),
@@ -255,8 +293,8 @@ export async function assertEventIdsExist(eventIds: number[]) {
   }
 }
 
-export async function getAdminParties(eventId?: number) {
-  const results = await fetchAdminPartiesRaw(eventId);
+export async function getAdminParties(filters: AdminPartiesFilters = {}) {
+  const results = await fetchAdminPartiesRaw(filters);
   return results.map(serializeAdminParty);
 }
 

@@ -22,14 +22,20 @@ import {
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const { event_id } = parseSearchParams(
+    const { event_id, side, status } = parseSearchParams(
       {
         event_id: url.searchParams.get("event_id") ?? undefined,
+        side: url.searchParams.get("side") ?? undefined,
+        status: url.searchParams.get("status") ?? undefined,
       },
       adminPartiesQuerySchema,
     );
 
-    const results = await getAdminParties(event_id);
+    const results = await getAdminParties({
+      eventId: event_id,
+      side,
+      status,
+    });
     return NextResponse.json(results);
   } catch (error) {
     return handleRouteError(error);

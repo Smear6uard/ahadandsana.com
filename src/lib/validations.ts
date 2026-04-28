@@ -120,8 +120,20 @@ export const reorderPartiesSchema = z.object({
     }),
 });
 
+const optionalSideSearchParam = z.preprocess(
+  (value) => (value === null || value === undefined || value === "" ? undefined : value),
+  z.enum(partySides).optional(),
+);
+
+const optionalStatusSearchParam = z.preprocess(
+  (value) => (value === null || value === undefined || value === "" ? undefined : value),
+  z.enum(invitationStatuses).optional(),
+);
+
 export const adminPartiesQuerySchema = z.object({
   event_id: optionalPositiveIntSearchParam,
+  side: optionalSideSearchParam,
+  status: optionalStatusSearchParam,
 });
 
 export const updateInvitationSchema = z.object({

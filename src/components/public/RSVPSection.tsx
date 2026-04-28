@@ -462,9 +462,14 @@ export default function RSVPSection() {
                       <p className="text-xs">{currentEvent.venue_address}</p>
                     </div>
                     {currentEvent.event_name === "Shadi" && (
-                      <p className="mt-4 font-display text-sm italic text-gold/80 tracking-wide">
-                        Mr. &amp; Mrs. Only
-                      </p>
+                      <div className="mt-4 flex flex-col items-center gap-1.5">
+                        <p className="font-display text-base text-charcoal tracking-wide leading-snug">
+                          We kindly request this be a child-free celebration
+                        </p>
+                        <p className="font-display text-base italic text-charcoal tracking-wide">
+                          Mr. &amp; Mrs. Only
+                        </p>
+                      </div>
                     )}
                     <div className="mt-6">
                       <CalendarButtons

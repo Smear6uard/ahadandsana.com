@@ -182,12 +182,17 @@ export default function Events() {
                 </motion.div>
 
                 {event.adultsOnly && (
-                  <motion.p
-                    className="mt-6 font-display text-sm italic text-gold/80 tracking-wide"
+                  <motion.div
+                    className="mt-6 flex flex-col items-center gap-1.5"
                     variants={childVariants}
                   >
-                    Mr. &amp; Mrs. Only
-                  </motion.p>
+                    <p className="font-display text-base text-charcoal tracking-wide leading-snug">
+                      We kindly request this be a child-free celebration
+                    </p>
+                    <p className="font-display text-base italic text-charcoal tracking-wide">
+                      Mr. &amp; Mrs. Only
+                    </p>
+                  </motion.div>
                 )}
 
                 <motion.a

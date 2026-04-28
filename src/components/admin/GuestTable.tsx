@@ -64,6 +64,22 @@ interface EventStat {
 
 type SideFilter = "all" | "ahad" | "sana";
 type EventFilter = "all" | number;
+type StatusFilter = "all" | "invited" | "attending" | "declined";
+
+function partyHasStatus(
+  party: Party,
+  eventFilter: EventFilter,
+  status: Exclude<StatusFilter, "all">,
+) {
+  return party.guests.some((guest) =>
+    guest.invitations.some((inv) => {
+      if (eventFilter !== "all" && inv.event_id !== eventFilter) {
+        return false;
+      }
+      return inv.status === status;
+    }),
+  );
+}
 
 function guestDisplayName(g: GuestData): string {
   const name = [g.first_name, g.last_name].filter(Boolean).join(" ").trim();
@@ -176,10 +192,19 @@ function SortablePartyCard({
 
         {/* Party Info */}
         <div className="flex-1 flex items-start sm:items-center flex-col sm:flex-row gap-1 sm:gap-3 min-w-0">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
             <h3 className={`font-display text-base sm:text-lg text-charcoal truncate ${!party.name ? "italic text-stone-warm/50" : ""}`}>
               {party.name || "Unnamed Party"}
             </h3>
+            {party.side && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-gold/25 bg-gold/8 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-gold-dark shrink-0"
+                title={party.side === "ahad" ? "Ahad's Side" : "Sana's Side"}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                {party.side === "ahad" ? "Ahad" : "Sana"}
+              </span>
+            )}
             <span className="text-xs text-stone-warm shrink-0">
               {visibleGuests.length} {visibleGuests.length === 1 ? "guest" : "guests"}
             </span>
@@ -289,6 +314,7 @@ export default function GuestTable({
 }) {
   const [search, setSearch] = useState("");
   const [sideFilter, setSideFilter] = useState<SideFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [editingParty, setEditingParty] = useState<Party | null>(null);
   const [partyOrder, setPartyOrder] = useState<number[] | null>(null);
 
@@ -334,6 +360,12 @@ export default function GuestTable({
       );
     }
 
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((p) =>
+        partyHasStatus(p, eventFilter, statusFilter),
+      );
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase();
       filtered = filtered.filter(
@@ -348,7 +380,46 @@ export default function GuestTable({
     }
 
     return filtered;
-  }, [orderedParties, sideFilter, eventFilter, search]);
+  }, [orderedParties, sideFilter, eventFilter, statusFilter, search]);
+
+  const statusCounts = useMemo(() => {
+    const basis = orderedParties.filter((p) => {
+      if (sideFilter !== "all" && p.side !== sideFilter) return false;
+      if (
+        eventFilter !== "all" &&
+        !p.guests.some((g) =>
+          g.invitations.some((inv) => inv.event_id === eventFilter),
+        )
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    return {
+      all: basis.length,
+      invited: basis.filter((p) => partyHasStatus(p, eventFilter, "invited"))
+        .length,
+      attending: basis.filter((p) =>
+        partyHasStatus(p, eventFilter, "attending"),
+      ).length,
+      declined: basis.filter((p) => partyHasStatus(p, eventFilter, "declined"))
+        .length,
+    };
+  }, [orderedParties, sideFilter, eventFilter]);
+
+  const hasActiveFilters =
+    sideFilter !== "all" ||
+    statusFilter !== "all" ||
+    eventFilter !== "all" ||
+    search.trim().length > 0;
+
+  const clearAllFilters = useCallback(() => {
+    setSideFilter("all");
+    setStatusFilter("all");
+    setSearch("");
+    onEventFilterChange("all");
+  }, [onEventFilterChange]);
 
   const sideCounts = useMemo(() => {
     const countVisibleGuests = (party: Party) =>
@@ -472,7 +543,7 @@ export default function GuestTable({
         </div>
 
         {/* Event Filter Tabs */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
               eventFilter === "all"
@@ -518,6 +589,76 @@ export default function GuestTable({
           ))}
         </div>
 
+        {/* Status Filter Tabs */}
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              {
+                key: "all",
+                label: "All Statuses",
+                dot: null,
+                activeClass: "bg-charcoal text-ivory shadow-sm ring-1 ring-charcoal/10",
+                count: statusCounts.all,
+              },
+              {
+                key: "invited",
+                label: "Pending",
+                dot: "bg-gold",
+                activeClass:
+                  "bg-gold/15 text-gold-dark shadow-sm ring-1 ring-gold/30",
+                count: statusCounts.invited,
+              },
+              {
+                key: "attending",
+                label: "Attending",
+                dot: "bg-forest",
+                activeClass:
+                  "bg-forest/10 text-forest shadow-sm ring-1 ring-forest/25",
+                count: statusCounts.attending,
+              },
+              {
+                key: "declined",
+                label: "Declined",
+                dot: "bg-red-400",
+                activeClass:
+                  "bg-red-50 text-red-500 shadow-sm ring-1 ring-red-200",
+                count: statusCounts.declined,
+              },
+            ] as const
+          ).map(({ key, label, dot, activeClass, count }) => {
+            const isActive = statusFilter === key;
+            return (
+              <button
+                key={key}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  isActive
+                    ? activeClass
+                    : "text-stone-warm hover:text-charcoal hover:bg-gold/5 border border-gold/15"
+                }`}
+                onClick={() =>
+                  setStatusFilter(
+                    statusFilter === key ? "all" : (key as StatusFilter),
+                  )
+                }
+              >
+                {dot && (
+                  <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                )}
+                <span>{label}</span>
+                <span
+                  className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] ${
+                    isActive
+                      ? "bg-charcoal/8 text-current"
+                      : "bg-gold/10 text-stone-warm"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {activeEvent ? (
             <span className="inline-flex items-center gap-2 rounded-full bg-gold/10 px-3 py-1 text-charcoal">
@@ -531,6 +672,14 @@ export default function GuestTable({
             {filteredParties.length} {filteredParties.length === 1 ? "party" : "parties"} •{" "}
             {filteredGuestCount} {filteredGuestCount === 1 ? "guest" : "guests"}
           </span>
+          {hasActiveFilters && (
+            <button
+              onClick={clearAllFilters}
+              className="ml-auto text-gold hover:text-gold-dark underline-offset-4 hover:underline transition-colors font-medium tracking-wide"
+            >
+              Clear all filters
+            </button>
+          )}
         </div>
 
         {/* Search */}
